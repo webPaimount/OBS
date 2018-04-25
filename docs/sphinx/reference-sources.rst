@@ -1012,6 +1012,13 @@ General Source Functions
 
 ---------------------
 
+.. function:: bool obs_source_monitor_enabled(const obs_source_t *source)
+              void obs_source_set_monitor_enabled(obs_source_t *source, bool enable)
+
+   Sets/gets whether the source's audio monitoring is enabled.
+
+---------------------
+
 .. function:: enum speaker_layout obs_source_get_speaker_layout(obs_source_t *source)
 
    Gets the current speaker layout.

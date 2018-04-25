@@ -85,6 +85,7 @@ static const char *source_signals[] = {
 	"void show(ptr source)",
 	"void hide(ptr source)",
 	"void mute(ptr source, bool muted)",
+	"void monitor_enable(ptr source, bool enabled)",
 	"void push_to_mute_changed(ptr source, bool enabled)",
 	"void push_to_mute_delay(ptr source, int delay)",
 	"void push_to_talk_changed(ptr source, bool enabled)",
@@ -1559,7 +1560,11 @@ static void source_output_audio_data(obs_source_t *source,
 
 	pthread_mutex_unlock(&source->audio_buf_mutex);
 
-	source_signal_audio_data(source, data, source_muted(source, os_time));
+	source_signal_audio_data(
+		source, data,
+		source_muted(source, os_time) &&
+			source->monitoring_type !=
+				OBS_MONITORING_TYPE_MONITOR_ONLY);
 }
 
 enum convert_type {
@@ -5098,13 +5103,36 @@ bool obs_source_muted(const obs_source_t *source)
 							    : false;
 }
 
+static void set_mute_and_monitor(obs_source_t *source, bool mute, bool monitor)
+{
+	if (!source)
+		return;
+
+	if (!monitor) {
+		obs_source_set_monitoring_type(source,
+					       OBS_MONITORING_TYPE_NONE);
+	} else {
+		if (mute)
+			obs_source_set_monitoring_type(
+				source, OBS_MONITORING_TYPE_MONITOR_ONLY);
+		else
+			obs_source_set_monitoring_type(
+				source, OBS_MONITORING_TYPE_MONITOR_AND_OUTPUT);
+	}
+
+	struct audio_action action = {.timestamp = os_gettime_ns(),
+				      .type = AUDIO_ACTION_MUTE,
+				      .set = mute};
+
+	pthread_mutex_lock(&source->audio_actions_mutex);
+	da_push_back(source->audio_actions, &action);
+	pthread_mutex_unlock(&source->audio_actions_mutex);
+}
+
 void obs_source_set_muted(obs_source_t *source, bool muted)
 {
 	struct calldata data;
 	uint8_t stack[128];
-	struct audio_action action = {.timestamp = os_gettime_ns(),
-				      .type = AUDIO_ACTION_MUTE,
-				      .set = muted};
 
 	if (!obs_source_valid(source, "obs_source_set_muted"))
 		return;
@@ -5117,9 +5145,7 @@ void obs_source_set_muted(obs_source_t *source, bool muted)
 
 	signal_handler_signal(source->context.signals, "mute", &data);
 
-	pthread_mutex_lock(&source->audio_actions_mutex);
-	da_push_back(source->audio_actions, &action);
-	pthread_mutex_unlock(&source->audio_actions_mutex);
+	set_mute_and_monitor(source, muted, obs_source_monitor_enabled(source));
 }
 
 static void source_signal_push_to_changed(obs_source_t *source,
@@ -6038,4 +6064,32 @@ void obs_source_restore_filters(obs_source_t *source, obs_data_array_t *array)
 	}
 
 	da_free(cur_filters);
+}
+
+void obs_source_set_monitor_enabled(obs_source_t *source, bool enable)
+{
+	if (!obs_ptr_valid(source, "obs_source_set_monitor_enabled"))
+		return;
+
+	struct calldata data;
+	uint8_t stack[128];
+
+	calldata_init_fixed(&data, stack, sizeof(stack));
+	calldata_set_ptr(&data, "source", source);
+	calldata_set_bool(&data, "enabled", enable);
+
+	signal_handler_signal(source->context.signals, "monitor_enable", &data);
+
+	set_mute_and_monitor(source, obs_source_muted(source), enable);
+}
+
+bool obs_source_monitor_enabled(const obs_source_t *source)
+{
+	if (!obs_ptr_valid(source, "obs_source_monitor_enabled"))
+		return false;
+
+	enum obs_monitoring_type monitoring_type =
+		obs_source_get_monitoring_type(source);
+
+	return monitoring_type != OBS_MONITORING_TYPE_NONE;
 }
