@@ -539,6 +539,20 @@ static void game_capture_update(void *data, obs_data_t *settings)
 
 extern void wait_for_hook_initialization(void);
 
+static void get_window_handle(void *data, calldata_t *cd)
+{
+	struct game_capture *gc = data;
+
+	calldata_set_ptr(cd, "window", gc->window);
+}
+
+static void get_process_handle(void *data, calldata_t *cd)
+{
+	struct game_capture *gc = data;
+
+	calldata_set_ptr(cd, "process", gc->target_process);
+}
+
 static void *game_capture_create(obs_data_t *settings, obs_source_t *source)
 {
 	struct game_capture *gc = bzalloc(sizeof(*gc));
@@ -552,6 +566,15 @@ static void *game_capture_create(obs_data_t *settings, obs_source_t *source)
 	gc->hotkey_pair = obs_hotkey_pair_register_source(
 		gc->source, HOTKEY_START, TEXT_HOTKEY_START, HOTKEY_STOP,
 		TEXT_HOTKEY_STOP, hotkey_start, hotkey_stop, gc, gc);
+
+	proc_handler_t *ph = obs_source_get_proc_handler(source);
+	proc_handler_add(ph, "void get_window_handle(out ptr window)",
+			 get_window_handle, gc);
+	proc_handler_add(ph, "void get_process_handle(out ptr process)",
+			 get_process_handle, gc);
+
+	signal_handler_t *sh = obs_source_get_signal_handler(gc->source);
+	signal_handler_add(sh, "void window_changed(ptr window)");
 
 	game_capture_update(gc, settings);
 	return gc;
@@ -1017,6 +1040,13 @@ static bool init_hook(struct game_capture *gc)
 	gc->next_window = NULL;
 	gc->active = true;
 	gc->retrying = 0;
+
+	calldata_t *cd = calldata_create();
+	calldata_set_ptr(cd, "window", gc->window);
+	signal_handler_signal(obs_source_get_signal_handler(gc->source),
+			      "window_changed", cd);
+	calldata_free(cd);
+
 	return true;
 }
 
