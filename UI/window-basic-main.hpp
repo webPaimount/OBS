@@ -626,6 +626,7 @@ private:
 	int GetOverrideTransitionDuration(OBSSource source);
 
 	void UpdateProjectorHideCursor();
+	void UpdateProjectorHideFrame(bool hideFrame);
 	void UpdateProjectorAlwaysOnTop(bool top);
 	void ResetProjectors();
 
