@@ -385,7 +385,10 @@ struct OBSStudioAPI : obs_frontend_callbacks {
 
 	obs_output_t *obs_frontend_get_streaming_output(void) override
 	{
-		OBSOutput output = main->outputHandler->streamOutput.Get();
+		if (main->outputHandler->streamOutputs.empty())
+			return nullptr;
+
+		OBSOutput output = main->outputHandler->streamOutputs[0].Get();
 		return obs_output_get_ref(output);
 	}
 
@@ -506,7 +509,7 @@ struct OBSStudioAPI : obs_frontend_callbacks {
 
 	obs_service_t *obs_frontend_get_streaming_service(void) override
 	{
-		return main->GetService();
+		return main->GetServices().front();
 	}
 
 	void obs_frontend_save_streaming_service(void) override

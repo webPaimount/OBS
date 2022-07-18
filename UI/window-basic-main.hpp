@@ -254,7 +254,7 @@ private:
 
 	os_cpu_usage_info_t *cpuUsageInfo = nullptr;
 
-	OBSService service;
+	std::vector<OBSService> services;
 	std::unique_ptr<BasicOutputHandler> outputHandler;
 	bool streamingStopping = false;
 	bool recordingStopping = false;
@@ -830,7 +830,9 @@ public:
 		return OBSSource(obs_scene_get_source(curScene));
 	}
 
-	obs_service_t *GetService();
+	std::vector<OBSService> GetServices();
+	std::vector<OBSOutput> GetStreamingOutputs();
+
 	void SetService(obs_service_t *service);
 
 	int GetTransitionDuration();
@@ -875,6 +877,7 @@ public:
 
 	void SaveService();
 	bool LoadService();
+	std::vector<OBSService> ExpandService(obs_service_t *service);
 
 	inline Auth *GetAuth() { return auth.get(); }
 
