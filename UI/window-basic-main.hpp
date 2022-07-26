@@ -38,6 +38,7 @@
 #include "auth-base.hpp"
 #include "log-viewer.hpp"
 #include "undo-stack-obs.hpp"
+#include "notifications-widget.hpp"
 
 #include <obs-frontend-internal.hpp>
 
@@ -51,6 +52,7 @@ class QMessageBox;
 class QListWidgetItem;
 class VolControl;
 class OBSBasicStats;
+class QStackedLayout;
 
 #include "ui_OBSBasic.h"
 #include "ui_ColorSelect.h"
@@ -185,6 +187,7 @@ class OBSBasic : public OBSMainWindow {
 	friend class DeviceToolbarPropertiesThread;
 	friend class OBSBasicSourceSelect;
 	friend class OBSYoutubeActions;
+	friend class OBSNotification;
 	friend struct BasicOutputHandler;
 	friend struct OBSStudioAPI;
 
@@ -211,6 +214,7 @@ private:
 	std::shared_ptr<Auth> auth;
 
 	std::vector<VolControl *> volumes;
+	std::vector<OBSNotification *> notifications;
 
 	std::vector<OBSSignal> signalHandlers;
 
@@ -326,6 +330,7 @@ private:
 	QPointer<QObject> shortcutFilter;
 	QPointer<QAction> renameScene;
 	QPointer<QAction> renameSource;
+	QPointer<QStackedLayout> notifyLayout;
 
 	QPointer<QWidget> programWidget;
 	QPointer<QVBoxLayout> programLayout;
@@ -398,6 +403,7 @@ private:
 	void CloseDialogs();
 	void ClearSceneData();
 	void ClearProjectors();
+	void ClearNotifications();
 
 	void Nudge(int dist, MoveDir dir);
 
@@ -614,6 +620,9 @@ private:
 	void UpdatePreviewSafeAreas();
 	bool drawSafeAreas = false;
 
+	void OpenSettings(int tab = 0);
+	void CloseNotification(OBSNotification *notification);
+
 public slots:
 	void DeferSaveBegin();
 	void DeferSaveEnd();
@@ -692,6 +701,10 @@ private slots:
 	void AddScene(OBSSource source);
 	void RemoveScene(OBSSource source);
 	void RenameSources(OBSSource source, QString newName, QString prevName);
+
+	void ShowNotification(uint32_t id, enum obs_notify_type type,
+			      const QString &message, bool persist, void *data);
+	void CloseNotification(uint32_t id);
 
 	void ActivateAudioSource(OBSSource source);
 	void DeactivateAudioSource(OBSSource source);
@@ -798,6 +811,8 @@ private:
 	static void SourceAudioActivated(void *data, calldata_t *params);
 	static void SourceAudioDeactivated(void *data, calldata_t *params);
 	static void SourceRenamed(void *data, calldata_t *params);
+	static void NotificationReceived(void *data, calldata_t *params);
+	static void NotificationClosed(void *data, calldata_t *params);
 	static void RenderMain(void *data, uint32_t cx, uint32_t cy);
 
 	void ResizePreview(uint32_t cx, uint32_t cy);
