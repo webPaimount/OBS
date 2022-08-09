@@ -185,14 +185,21 @@ static inline bool has_scaling(const struct obs_encoder *encoder)
 		video_height != encoder->scaled_height);
 }
 
-static inline bool gpu_encode_available(const struct obs_encoder *encoder)
+static inline bool gpu_encode_available(const struct obs_encoder *encoder,
+					struct video_scale_info *info)
 {
 	struct obs_core_video *const video = &obs->video;
-	return (encoder->info.caps & OBS_ENCODER_CAP_PASS_TEXTURE) != 0 &&
-	       (video->using_p010_tex || video->using_nv12_tex);
+	if ((encoder->info.caps & OBS_ENCODER_CAP_PASS_TEXTURE) == 0) {
+		return false;
+	}
+	if (!encoder->info.encode_texture_available) {
+		return video->using_p010_tex || video->using_nv12_tex;
+	}
+	return encoder->info.encode_texture_available(encoder->context.data,
+						      info);
 }
 
-static void add_connection(struct obs_encoder *encoder)
+static bool add_connection(struct obs_encoder *encoder)
 {
 	if (encoder->info.type == OBS_ENCODER_AUDIO) {
 		struct audio_convert_info audio_info = {0};
@@ -204,15 +211,28 @@ static void add_connection(struct obs_encoder *encoder)
 		struct video_scale_info info = {0};
 		get_video_info(encoder, &info);
 
-		if (gpu_encode_available(encoder)) {
+		if (gpu_encode_available(encoder, &info)) {
 			start_gpu_encode(encoder);
-		} else {
+		} else if (encoder->info.encode) {
 			start_raw_video(encoder->media, &info, receive_video,
 					encoder);
+		} else {
+			const char *name =
+				obs_encoder_get_display_name(encoder->info.id);
+			struct dstr error_message = {0};
+			dstr_printf(
+				&error_message,
+				"Texture-only encoder %s not supported on this device",
+				name ? name : encoder->info.id);
+			obs_encoder_set_last_error(encoder,
+						   error_message.array);
+			dstr_free(&error_message);
+			return false;
 		}
 	}
 
 	set_encoder_active(encoder, true);
+	return true;
 }
 
 static void remove_connection(struct obs_encoder *encoder, bool shutdown)
@@ -221,7 +241,7 @@ static void remove_connection(struct obs_encoder *encoder, bool shutdown)
 		audio_output_disconnect(encoder->media, encoder->mixer_idx,
 					receive_audio, encoder);
 	} else {
-		if (gpu_encode_available(encoder)) {
+		if (os_atomic_load_long(&obs->video.gpu_encoder_active)) {
 			stop_gpu_encode(encoder);
 		} else {
 			stop_raw_video(encoder->media, receive_video, encoder);
@@ -552,7 +572,7 @@ void pause_reset(struct pause_data *pause)
 	pthread_mutex_unlock(&pause->mutex);
 }
 
-static inline void obs_encoder_start_internal(
+static inline bool obs_encoder_start_internal(
 	obs_encoder_t *encoder,
 	void (*new_packet)(void *param, struct encoder_packet *packet),
 	void *param)
@@ -561,7 +581,7 @@ static inline void obs_encoder_start_internal(
 	bool first = false;
 
 	if (!encoder->context.data)
-		return;
+		return false;
 
 	pthread_mutex_lock(&encoder->callbacks_mutex);
 
@@ -578,23 +598,25 @@ static inline void obs_encoder_start_internal(
 		pause_reset(&encoder->pause);
 
 		encoder->cur_pts = 0;
-		add_connection(encoder);
+		return add_connection(encoder);
 	}
+	return true;
 }
 
-void obs_encoder_start(obs_encoder_t *encoder,
+bool obs_encoder_start(obs_encoder_t *encoder,
 		       void (*new_packet)(void *param,
 					  struct encoder_packet *packet),
 		       void *param)
 {
 	if (!obs_encoder_valid(encoder, "obs_encoder_start"))
-		return;
+		return false;
 	if (!obs_ptr_valid(new_packet, "obs_encoder_start"))
-		return;
+		return false;
 
 	pthread_mutex_lock(&encoder->init_mutex);
-	obs_encoder_start_internal(encoder, new_packet, param);
+	bool success = obs_encoder_start_internal(encoder, new_packet, param);
 	pthread_mutex_unlock(&encoder->init_mutex);
+	return success;
 }
 
 static inline bool obs_encoder_stop_internal(
