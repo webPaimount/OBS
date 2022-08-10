@@ -9857,6 +9857,9 @@ void OBSBasic::PauseRecording()
 		if (replay)
 			replay->setEnabled(false);
 
+		if (splitFile)
+			splitFile->setEnabled(false);
+
 		if (api)
 			api->on_event(OBS_FRONTEND_EVENT_RECORDING_PAUSED);
 
@@ -9901,6 +9904,9 @@ void OBSBasic::UnpauseRecording()
 		if (replay)
 			replay->setEnabled(true);
 
+		if (splitFile)
+			splitFile->setEnabled(true);
+
 		if (api)
 			api->on_event(OBS_FRONTEND_EVENT_RECORDING_UNPAUSED);
 	}
@@ -9920,15 +9926,40 @@ void OBSBasic::PauseToggled()
 		UnpauseRecording();
 }
 
+void OBSBasic::RecordingSplitFile()
+{
+	obs_frontend_recording_split_file();
+}
+
 void OBSBasic::UpdatePause(bool activate)
 {
 	if (!activate || !outputHandler || !outputHandler->RecordingActive()) {
 		pause.reset();
+		splitFile.reset();
 		return;
 	}
 
 	const char *mode = config_get_string(basicConfig, "Output", "Mode");
 	bool adv = astrcmpi(mode, "Advanced") == 0;
+
+	if (adv && config_get_bool(basicConfig, "AdvOut", "RecSplitFile")) {
+		splitFile.reset(new QPushButton());
+		splitFile->setAccessibleName(QTStr("Basic.Main.SplitFile"));
+		splitFile->setToolTip(QTStr("Basic.Main.SplitFile"));
+		splitFile->setProperty(
+			"themeID", QVariant(QStringLiteral("cutIconSmall")));
+
+		QSizePolicy sp;
+		sp.setHeightForWidth(true);
+		splitFile->setSizePolicy(sp);
+
+		connect(splitFile.data(), &QAbstractButton::clicked, this,
+			&OBSBasic::RecordingSplitFile);
+		ui->recordingLayout->addWidget(splitFile.data());
+	} else {
+		splitFile.reset();
+	}
+
 	bool shared;
 
 	if (adv) {
