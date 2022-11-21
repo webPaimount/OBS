@@ -192,6 +192,7 @@ class OBSBasic : public OBSMainWindow {
 	friend struct BasicOutputHandler;
 	friend struct OBSStudioAPI;
 	friend class ScreenshotObj;
+	friend class OBSAdvAudioCtrl;
 
 	enum class MoveDir { Up, Down, Left, Right };
 
@@ -756,7 +757,6 @@ private slots:
 
 	void HideAudioControl();
 	void UnhideAllAudioControls();
-	void ToggleHideMixer();
 
 	void MixerRenameSource();
 
@@ -988,6 +988,8 @@ public:
 
 	QColor GetSelectionColor() const;
 
+	void SetSourceMixerHidden(OBSSource source, bool hidden);
+
 protected:
 	virtual void closeEvent(QCloseEvent *event) override;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -1216,6 +1218,9 @@ public:
 				   const char *file) const override;
 
 	static void InitBrowserPanelSafeBlock();
+
+signals:
+	void sourceMixerHidden(OBSSource source, bool hide);
 };
 
 class SceneRenameDelegate : public QStyledItemDelegate {
