@@ -48,6 +48,7 @@ OBSAdvAudioCtrl::OBSAdvAudioCtrl(QGridLayout *, obs_source_t *source_)
 	mixer4 = new QCheckBox();
 	mixer5 = new QCheckBox();
 	mixer6 = new QCheckBox();
+	showMixer = new QCheckBox();
 
 	activateSignal.Connect(handler, "activate", OBSSourceActivated, this);
 	deactivateSignal.Connect(handler, "deactivate", OBSSourceDeactivated,
@@ -96,6 +97,11 @@ OBSAdvAudioCtrl::OBSAdvAudioCtrl(QGridLayout *, obs_source_t *source_)
 	if (isActive)
 		setThemeID(active, "error");
 	active->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+
+	OBSDataAutoRelease priv_settings =
+		obs_source_get_private_settings(source);
+	bool hideInMixer = obs_data_get_bool(priv_settings, "mixer_hidden");
+	updateShowMixer(source, hideInMixer);
 
 	volume->setMinimum(MIN_DB - 0.1);
 	volume->setMaximum(MAX_DB);
@@ -251,6 +257,10 @@ OBSAdvAudioCtrl::OBSAdvAudioCtrl(QGridLayout *, obs_source_t *source_)
 			 SLOT(mixer5Changed(bool)));
 	QWidget::connect(mixer6, SIGNAL(clicked(bool)), this,
 			 SLOT(mixer6Changed(bool)));
+	QWidget::connect(main, SIGNAL(sourceMixerHidden(OBSSource, bool)), this,
+			 SLOT(updateShowMixer(OBSSource, bool)));
+	QWidget::connect(showMixer, SIGNAL(clicked(bool)), this,
+			 SLOT(showMixerChanged(bool)));
 
 	setObjectName(sourceName);
 }
@@ -267,6 +277,7 @@ OBSAdvAudioCtrl::~OBSAdvAudioCtrl()
 	if (obs_audio_monitoring_available())
 		monitoringType->deleteLater();
 	mixerContainer->deleteLater();
+	showMixer->deleteLater();
 }
 
 void OBSAdvAudioCtrl::ShowAudioControl(QGridLayout *layout)
@@ -277,6 +288,7 @@ void OBSAdvAudioCtrl::ShowAudioControl(QGridLayout *layout)
 	layout->addWidget(iconLabel, lastRow, idx++);
 	layout->addWidget(nameLabel, lastRow, idx++);
 	layout->addWidget(active, lastRow, idx++);
+	layout->addWidget(showMixer, lastRow, idx++);
 	layout->addWidget(stackedWidget, lastRow, idx++);
 	layout->addWidget(forceMono, lastRow, idx++);
 	layout->addWidget(balanceContainer, lastRow, idx++);
@@ -691,4 +703,24 @@ void OBSAdvAudioCtrl::SetIconVisible(bool visible)
 void OBSAdvAudioCtrl::SetSourceName(QString newName)
 {
 	TruncateLabel(nameLabel, newName);
+}
+
+void OBSAdvAudioCtrl::updateShowMixer(OBSSource source_, bool hidden)
+{
+	if (source_ == source)
+		showMixer->setChecked(!hidden);
+}
+
+void OBSAdvAudioCtrl::showMixerChanged(bool checked)
+{
+	OBSDataAutoRelease priv_settings =
+		obs_source_get_private_settings(source);
+	obs_data_set_bool(priv_settings, "mixer_hidden", !checked);
+
+	OBSBasic *main = OBSBasic::Get();
+
+	if (checked)
+		main->ActivateAudioSource(source);
+	else
+		main->DeactivateAudioSource(source);
 }
