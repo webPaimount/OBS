@@ -26,13 +26,15 @@ if(OS_WINDOWS)
   add_subdirectory(vlc-video)
   add_subdirectory(obs-vst)
 
-  if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/enc-amf/CMakeLists.txt")
+  if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/enc-amf/CMakeLists.txt" AND NOT DEFINED
+                                                                   ARCH_ARM64)
     add_subdirectory(enc-amf)
   else()
     obs_status(WARNING "enc-amf plugin not found.")
   endif()
   if(MSVC)
     add_subdirectory(win-ivcam)
+    add_definitions(-DNOMINMAX)
   endif()
 
   check_obs_browser()
