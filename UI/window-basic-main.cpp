@@ -1285,6 +1285,10 @@ retryScene:
 		ui->preview->SetScrollingOffset(scrollOffX, scrollOffY);
 	}
 	ui->preview->SetFixedScaling(fixedScaling);
+
+	if (!fixedScaling)
+		SetPreviewScrollBarsVisible(false);
+
 	emit ui->preview->DisplayResized();
 
 	if (vcamEnabled) {
@@ -4880,8 +4884,18 @@ void OBSBasic::ResizePreview(uint32_t cx, uint32_t cy)
 	obs_get_video_info(&ovi);
 
 	if (isFixedScaling) {
-		ui->preview->ClampScrollingOffsets();
 		previewScale = ui->preview->GetScalingAmount();
+
+		float scaleX =
+			(float(cx) * previewScale) / float(targetSize.width());
+		ui->previewXScrollBar->setVisible(scaleX > 1.0f);
+
+		float scaleY =
+			(float(cy) * previewScale) / float(targetSize.height());
+		ui->previewYScrollBar->setVisible(scaleY > 1.0f);
+
+		ui->preview->ClampScrollingOffsets();
+
 		GetCenterPosFromFixedScale(
 			int(cx), int(cy),
 			targetSize.width() - PREVIEW_EDGE_SIZE * 2,
@@ -9160,6 +9174,9 @@ void OBSBasic::EnablePreviewDisplay(bool enable)
 	obs_display_set_enabled(ui->preview->GetDisplay(), enable);
 	ui->preview->setVisible(enable);
 	ui->previewDisabledWidget->setVisible(!enable);
+
+	if (ui->preview->IsFixedScaling())
+		SetPreviewScrollBarsVisible(enable);
 }
 
 void OBSBasic::TogglePreview()
@@ -9751,6 +9768,7 @@ void OBSBasic::on_actionScaleWindow_triggered()
 {
 	ui->preview->SetFixedScaling(false);
 	ui->preview->ResetScrollingOffset();
+	SetPreviewScrollBarsVisible(false);
 	emit ui->preview->DisplayResized();
 }
 
@@ -9772,7 +9790,6 @@ void OBSBasic::on_actionScaleOutput_triggered()
 	int32_t approxScalingLevel =
 		int32_t(round(log(scalingAmount) / log(ZOOM_SENSITIVITY)));
 	ui->preview->SetScalingLevel(approxScalingLevel);
-	ui->preview->SetScalingAmount(scalingAmount);
 	emit ui->preview->DisplayResized();
 }
 
@@ -11131,4 +11148,28 @@ void OBSBasic::ThemeChanged()
 
 	if (api)
 		api->on_event(OBS_FRONTEND_EVENT_THEME_CHANGED);
+}
+
+void OBSBasic::SetPreviewScrollBarsVisible(bool visible)
+{
+	ui->previewXScrollBar->setVisible(visible);
+	ui->previewYScrollBar->setVisible(visible);
+}
+
+void OBSBasic::on_previewXScrollBar_valueChanged(int value)
+{
+	ui->preview->updatingXScrollBar = true;
+	ui->preview->scrollingOffset.x = float(-value);
+
+	emit ui->preview->DisplayResized();
+	ui->preview->updatingXScrollBar = false;
+}
+
+void OBSBasic::on_previewYScrollBar_valueChanged(int value)
+{
+	ui->preview->updatingYScrollBar = true;
+	ui->preview->scrollingOffset.y = float(-value);
+
+	emit ui->preview->DisplayResized();
+	ui->preview->updatingYScrollBar = false;
 }
