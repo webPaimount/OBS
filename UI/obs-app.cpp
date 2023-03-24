@@ -1397,6 +1397,8 @@ OBSApp::OBSApp(int &argc, char **argv, profiler_name_store_t *store)
 	setWindowIcon(QIcon::fromTheme("obs", QIcon(":/res/images/obs.png")));
 #endif
 
+	shortcutFilter = CreateShortcutFilter();
+
 	setDesktopFileName("com.obsproject.Studio");
 }
 
@@ -1420,6 +1422,8 @@ OBSApp::~OBSApp()
 
 	os_inhibit_sleep_set_active(sleepInhibitor, false);
 	os_inhibit_sleep_destroy(sleepInhibitor);
+
+	delete shortcutFilter;
 
 	if (libobs_initialized)
 		obs_shutdown();

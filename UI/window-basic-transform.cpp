@@ -68,7 +68,7 @@ OBSBasicTransform::OBSBasicTransform(OBSSceneItem item, OBSBasic *parent)
 		&QPushButton::clicked, main,
 		&OBSBasic::on_actionResetTransform_triggered);
 
-	installEventFilter(CreateShortcutFilter());
+	installEventFilter(App()->shortcutFilter);
 
 	OBSScene scene = obs_sceneitem_get_scene(item);
 	SetScene(scene);
