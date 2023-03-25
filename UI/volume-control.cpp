@@ -4,7 +4,9 @@
 #include "obs-app.hpp"
 #include "mute-checkbox.hpp"
 #include "slider-ignorewheel.hpp"
+#include "headphone-checkbox.hpp"
 #include "slider-absoluteset-style.hpp"
+#include "window-basic-main.hpp"
 #include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -52,6 +54,15 @@ void VolControl::OBSVolumeMuted(void *data, calldata_t *calldata)
 				  Q_ARG(bool, muted));
 }
 
+void VolControl::OBSMonitorEnabled(void *data, calldata_t *calldata)
+{
+	VolControl *volControl = static_cast<VolControl *>(data);
+	bool enabled = calldata_bool(calldata, "enabled");
+
+	QMetaObject::invokeMethod(volControl, "MonitorEnabled",
+				  Q_ARG(bool, enabled));
+}
+
 void VolControl::VolumeChanged()
 {
 	slider->blockSignals(true);
@@ -70,12 +81,18 @@ void VolControl::VolumeMuted(bool muted)
 	volMeter->muted = muted;
 }
 
+void VolControl::MonitorEnabled(bool enabled)
+{
+	if (headphone->isChecked() != enabled)
+		headphone->setChecked(enabled);
+}
+
 void VolControl::SetMuted(bool checked)
 {
 	bool prev = obs_source_muted(source);
 	obs_source_set_muted(source, checked);
 
-	auto undo_redo = [](const std::string &name, bool val) {
+	auto undo_redo = [this](const std::string &name, bool val) {
 		OBSSourceAutoRelease source =
 			obs_get_source_by_name(name.c_str());
 		obs_source_set_muted(source, val);
@@ -83,6 +100,28 @@ void VolControl::SetMuted(bool checked)
 
 	QString text =
 		QTStr(checked ? "Undo.Volume.Mute" : "Undo.Volume.Unmute");
+
+	const char *name = obs_source_get_name(source);
+	OBSBasic::Get()->undo_s.add_action(
+		text.arg(name),
+		std::bind(undo_redo, std::placeholders::_1, prev),
+		std::bind(undo_redo, std::placeholders::_1, checked), name,
+		name);
+}
+
+void VolControl::SetMonitor(bool checked)
+{
+	bool prev = obs_source_monitor_enabled(source);
+	obs_source_set_monitor_enabled(source, checked);
+
+	auto undo_redo = [this](const std::string &name, bool val) {
+		OBSSourceAutoRelease source =
+			obs_get_source_by_name(name.c_str());
+		obs_source_set_monitor_enabled(source, val);
+	};
+
+	QString text =
+		QTStr(checked ? "Undo.Monitor.Enable" : "Undo.Monitor.Disable");
 
 	const char *name = obs_source_get_name(source);
 	OBSBasic::Get()->undo_s.add_action(
@@ -177,6 +216,18 @@ VolControl::VolControl(OBSSource source_, bool showConfig, bool vertical)
 	QString sourceName = obs_source_get_name(source);
 	setObjectName(sourceName);
 
+	bool muted = obs_source_muted(source);
+
+	if (obs_audio_monitoring_available()) {
+		headphone = new HeadphoneCheckBox();
+		headphone->setAccessibleName(
+			QTStr("VolControl.Headphones").arg(sourceName));
+		headphone->setToolTip(
+			QTStr("VolControl.Headphones").arg(sourceName));
+
+		headphone->setChecked(obs_source_monitor_enabled(source));
+	}
+
 	if (showConfig) {
 		config = new QPushButton(this);
 		config->setProperty("themeID", "menuIconSmall");
@@ -218,12 +269,22 @@ VolControl::VolControl(OBSSource source_, bool showConfig, bool vertical)
 		controlLayout->setContentsMargins(0, 0, 0, 0);
 		controlLayout->setSpacing(0);
 
-		if (showConfig)
-			controlLayout->addWidget(config);
-
 		controlLayout->addItem(new QSpacerItem(3, 0));
-		// Add Headphone (audio monitoring) widget here
 		controlLayout->addWidget(mute);
+		controlLayout->setAlignment(mute, Qt::AlignVCenter |
+							  Qt::AlignHCenter);
+
+		if (obs_audio_monitoring_available()) {
+			controlLayout->addWidget(headphone);
+			controlLayout->setAlignment(
+				headphone, Qt::AlignVCenter | Qt::AlignHCenter);
+		}
+
+		if (showConfig) {
+			controlLayout->addWidget(config);
+			controlLayout->setAlignment(
+				config, Qt::AlignVCenter | Qt::AlignHCenter);
+		}
 
 		meterLayout->setContentsMargins(0, 0, 0, 0);
 		meterLayout->setSpacing(0);
@@ -266,12 +327,21 @@ VolControl::VolControl(OBSSource source_, bool showConfig, bool vertical)
 		botLayout->setSpacing(5);
 		botLayout->addWidget(slider);
 		botLayout->addWidget(mute);
+
+		if (obs_audio_monitoring_available()) {
+			botLayout->addWidget(headphone);
+			botLayout->setAlignment(
+				headphone, Qt::AlignVCenter | Qt::AlignHCenter);
+		}
+
 		botLayout->setAlignment(slider, Qt::AlignVCenter);
-		botLayout->setAlignment(mute, Qt::AlignVCenter);
+		botLayout->setAlignment(mute,
+					Qt::AlignVCenter | Qt::AlignHCenter);
 
 		if (showConfig) {
 			botLayout->addWidget(config);
-			botLayout->setAlignment(config, Qt::AlignVCenter);
+			botLayout->setAlignment(
+				config, Qt::AlignVCenter | Qt::AlignHCenter);
 		}
 
 		mainLayout->addItem(textLayout);
@@ -288,7 +358,6 @@ VolControl::VolControl(OBSSource source_, bool showConfig, bool vertical)
 	slider->setMinimum(0);
 	slider->setMaximum(int(FADER_PRECISION));
 
-	bool muted = obs_source_muted(source);
 	mute->setChecked(muted);
 	volMeter->muted = muted;
 	mute->setAccessibleName(QTStr("VolControl.Mute").arg(sourceName));
@@ -302,6 +371,14 @@ VolControl::VolControl(OBSSource source_, bool showConfig, bool vertical)
 			 SLOT(SliderChanged(int)));
 	QWidget::connect(mute, SIGNAL(clicked(bool)), this,
 			 SLOT(SetMuted(bool)));
+
+	if (obs_audio_monitoring_available()) {
+		signal_handler_connect(obs_source_get_signal_handler(source),
+				       "monitor_enable", OBSMonitorEnabled,
+				       this);
+		QWidget::connect(headphone, SIGNAL(clicked(bool)), this,
+				 SLOT(SetMonitor(bool)));
+	}
 
 	obs_fader_attach_source(obs_fader, source);
 	obs_volmeter_attach_source(obs_volmeter, source);
@@ -334,6 +411,12 @@ VolControl::~VolControl()
 
 	signal_handler_disconnect(obs_source_get_signal_handler(source), "mute",
 				  OBSVolumeMuted, this);
+
+	if (obs_audio_monitoring_available()) {
+		signal_handler_disconnect(obs_source_get_signal_handler(source),
+					  "monitor_enable", OBSMonitorEnabled,
+					  this);
+	}
 
 	obs_fader_destroy(obs_fader);
 	obs_volmeter_destroy(obs_volmeter);

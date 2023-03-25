@@ -164,6 +164,7 @@ target_sources(
           clickable-label.hpp
           double-slider.cpp
           double-slider.hpp
+          headphone-checkbox.hpp
           horizontal-scroll-area.cpp
           horizontal-scroll-area.hpp
           item-widget-helpers.cpp

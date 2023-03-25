@@ -990,6 +990,16 @@ MuteCheckBox::indicator:unchecked {
     image: url(./Dark/settings/audio.svg);
 }
 
+/* Headphone CheckBox */
+
+HeadphoneCheckBox::indicator:checked {
+	image: url(./Dark/headphones-on.svg);
+}
+
+HeadphoneCheckBox::indicator:unchecked {
+	image: url(:/res/images/headphones-off.svg);
+}
+
 OBSHotkeyLabel[hotkeyPairHover=true] {
     color: rgb(53,82,222);
 }
@@ -1212,8 +1222,8 @@ MuteCheckBox {
 }
 
 MuteCheckBox::indicator {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
 }
 
 MuteCheckBox::indicator:checked {
@@ -1246,6 +1256,49 @@ MuteCheckBox::indicator:checked:disabled {
 
 MuteCheckBox::indicator:unchecked:disabled {
 	image: url(./Dark/settings/audio.svg);
+}
+
+/* Headphone CheckBox */
+
+HeadphoneCheckBox {
+	outline: none;
+}
+
+HeadphoneCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+}
+
+HeadphoneCheckBox::indicator:checked {
+	image: url(./Dark/headphones-on.svg);
+}
+
+HeadphoneCheckBox::indicator:unchecked {
+	image: url(:/res/images/headphones-off.svg);
+}
+
+HeadphoneCheckBox::indicator:unchecked:hover {
+	image: url(:/res/images/headphones-off.svg);
+}
+
+HeadphoneCheckBox::indicator:unchecked:focus {
+	image: url(:/res/images/headphones-off.svg);
+}
+
+HeadphoneCheckBox::indicator:checked:hover {
+	image: url(./Dark/headphones-on.svg);
+}
+
+HeadphoneCheckBox::indicator:checked:focus {
+	image: url(./Dark/headphones-on.svg);
+}
+
+HeadphoneCheckBox::indicator:checked:disabled {
+	image: url(./Dark/headphones-on.svg);
+}
+
+HeadphoneCheckBox::indicator:unchecked:disabled {
+	image: url(:/res/images/headphones-off.svg);
 }
 
 #hotkeyFilterReset {
