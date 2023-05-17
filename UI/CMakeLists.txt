@@ -80,6 +80,8 @@ target_sources(
           obs-app.hpp
           obs-proxy-style.cpp
           obs-proxy-style.hpp
+          output-obj.cpp
+          output-obj.hpp
           platform.hpp
           qt-display.cpp
           qt-display.hpp
