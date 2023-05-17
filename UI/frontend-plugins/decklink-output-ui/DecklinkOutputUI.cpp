@@ -32,7 +32,7 @@ void DecklinkOutputUI::SetupPropertiesView()
 
 	obs_data_t *settings = obs_data_create();
 
-	OBSData data = load_settings();
+	OBSData data = load_settings("decklinkOutputProps.json");
 	if (data)
 		obs_data_apply(settings, data);
 
@@ -69,7 +69,7 @@ void DecklinkOutputUI::SetupPreviewPropertiesView()
 
 	obs_data_t *settings = obs_data_create();
 
-	OBSData data = load_preview_settings();
+	OBSData data = load_settings("decklinkPreviewOutputProps.json");
 	if (data)
 		obs_data_apply(settings, data);
 

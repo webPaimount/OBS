@@ -30,6 +30,8 @@ target_sources(
           decklink-ui-main.h
           ${CMAKE_SOURCE_DIR}/UI/double-slider.cpp
           ${CMAKE_SOURCE_DIR}/UI/double-slider.hpp
+          ${CMAKE_SOURCE_DIR}/UI/output-obj.cpp
+          ${CMAKE_SOURCE_DIR}/UI/output-obj.hpp
           ${CMAKE_SOURCE_DIR}/UI/plain-text-edit.hpp
           ${CMAKE_SOURCE_DIR}/UI/plain-text-edit.cpp
           ${CMAKE_SOURCE_DIR}/UI/properties-view.hpp
