@@ -52,7 +52,7 @@ OBSBasicTransform::OBSBasicTransform(OBSSceneItem item, OBSBasic *parent)
 	HookWidget(ui->rotation, DSCROLL_CHANGED, SLOT(OnControlChanged()));
 	HookWidget(ui->sizeX, DSCROLL_CHANGED, SLOT(OnControlChanged()));
 	HookWidget(ui->sizeY, DSCROLL_CHANGED, SLOT(OnControlChanged()));
-	HookWidget(ui->align, COMBO_CHANGED, SLOT(OnControlChanged()));
+	HookWidget(ui->align, COMBO_CHANGED, SLOT(OnAlignmentChanged()));
 	HookWidget(ui->boundsType, COMBO_CHANGED, SLOT(OnBoundsType(int)));
 	HookWidget(ui->boundsAlign, COMBO_CHANGED, SLOT(OnControlChanged()));
 	HookWidget(ui->boundsWidth, DSCROLL_CHANGED, SLOT(OnControlChanged()));
@@ -255,6 +255,7 @@ void OBSBasicTransform::RefreshControls()
 	int boundsAlignIndex = AlignToList(osi.bounds_alignment);
 
 	ignoreItemChange = true;
+
 	ui->positionX->setValue(osi.pos.x);
 	ui->positionY->setValue(osi.pos.y);
 	ui->rotation->setValue(osi.rot);
@@ -275,6 +276,9 @@ void OBSBasicTransform::RefreshControls()
 	ui->cropRight->setValue(int(crop.right));
 	ui->cropTop->setValue(int(crop.top));
 	ui->cropBottom->setValue(int(crop.bottom));
+
+	oti_save = osi;
+
 	ignoreItemChange = false;
 
 	std::string name = obs_source_get_name(source);
@@ -340,7 +344,28 @@ void OBSBasicTransform::OnControlChanged()
 
 	ignoreTransformSignal = true;
 	obs_sceneitem_set_info(item, &oti);
+	oti_save = oti;
 	ignoreTransformSignal = false;
+}
+
+void OBSBasicTransform::OnAlignmentChanged()
+{
+	if (ignoreItemChange)
+		return;
+
+	uint32_t newAlignment = listToAlign[ui->align->currentIndex()];
+	struct vec2 offset;
+
+	obs_sceneitem_alignment_get_vecdiff(item, &offset, oti_save.alignment,
+					    newAlignment);
+
+	ignoreItemChange = true;
+
+	ui->positionX->setValue(oti_save.pos.x + offset.x);
+	ui->positionY->setValue(oti_save.pos.y + offset.y);
+
+	ignoreItemChange = false;
+	OnControlChanged();
 }
 
 void OBSBasicTransform::OnCropChanged()
