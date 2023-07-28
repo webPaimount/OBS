@@ -84,8 +84,7 @@ OBSBasicProperties::OBSBasicProperties(QWidget *parent, OBSSource source_)
 	ui->propertiesLayout->addWidget(view);
 
 	if (type == OBS_SOURCE_TYPE_TRANSITION) {
-		connect(view, SIGNAL(PropertiesRefreshed()), this,
-			SLOT(AddPreviewButton()));
+		AddPreviewButton();
 	}
 
 	view->show();
@@ -184,8 +183,8 @@ void OBSBasicProperties::AddPreviewButton()
 {
 	QPushButton *playButton =
 		new QPushButton(QTStr("PreviewTransition"), this);
-	VScrollArea *area = view;
-	area->widget()->layout()->addWidget(playButton);
+	QHBoxLayout *hbl = dynamic_cast<QHBoxLayout *>(ui->buttonBox->layout());
+	hbl->insertWidget(2, playButton);
 
 	playButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
