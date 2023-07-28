@@ -46,13 +46,20 @@ OBSBasicProperties::OBSBasicProperties(QWidget *parent, OBSSource source_)
 	  ui(new Ui::OBSBasicProperties),
 	  main(qobject_cast<OBSBasic *>(parent)),
 	  acceptClicked(false),
-	  source(source_),
-	  removedSignal(obs_source_get_signal_handler(source), "remove",
-			OBSBasicProperties::SourceRemoved, this),
-	  renamedSignal(obs_source_get_signal_handler(source), "rename",
-			OBSBasicProperties::SourceRenamed, this),
+	  weakSource(OBSGetWeakRef(source_)),
 	  oldSettings(obs_data_create())
 {
+	OBSSource source = GetSource();
+
+	if (source) {
+		removedSignal.Connect(obs_source_get_signal_handler(source),
+				      "remove",
+				      OBSBasicProperties::SourceRemoved, this);
+		renamedSignal.Connect(obs_source_get_signal_handler(source),
+				      "rename",
+				      OBSBasicProperties::SourceRenamed, this);
+	}
+
 	int cx = (int)config_get_int(App()->GlobalConfig(), "PropertiesWindow",
 				     "cx");
 	int cy = (int)config_get_int(App()->GlobalConfig(), "PropertiesWindow",
@@ -175,7 +182,7 @@ OBSBasicProperties::~OBSBasicProperties()
 	if (sourceClone) {
 		obs_source_dec_active(sourceClone);
 	}
-	obs_source_dec_showing(source);
+	obs_source_dec_showing(GetSource());
 	main->SaveProject();
 	main->UpdateContextBarDeferred(true);
 }
@@ -313,7 +320,12 @@ static bool ConfirmReset(QWidget *parent)
 
 void OBSBasicProperties::on_buttonBox_clicked(QAbstractButton *button)
 {
-	QDialogButtonBox::ButtonRole val = ui->buttonBox->buttonRole(button);
+	OBSSource source = GetSource();
+
+	if (!source)
+		return;
+
+	QDialogButtonBox::ButtonRole val = buttonBox->buttonRole(button);
 
 	if (val == QDialogButtonBox::AcceptRole) {
 
@@ -389,11 +401,13 @@ void OBSBasicProperties::DrawPreview(void *data, uint32_t cx, uint32_t cy)
 {
 	OBSBasicProperties *window = static_cast<OBSBasicProperties *>(data);
 
-	if (!window->source)
+	OBSSource source = window->GetSource();
+
+	if (!source)
 		return;
 
-	uint32_t sourceCX = max(obs_source_get_width(window->source), 1u);
-	uint32_t sourceCY = max(obs_source_get_height(window->source), 1u);
+	uint32_t sourceCX = max(obs_source_get_width(source), 1u);
+	uint32_t sourceCY = max(obs_source_get_height(source), 1u);
 
 	int x, y;
 	int newCX, newCY;
@@ -410,7 +424,7 @@ void OBSBasicProperties::DrawPreview(void *data, uint32_t cx, uint32_t cy)
 
 	gs_ortho(0.0f, float(sourceCX), 0.0f, float(sourceCY), -100.0f, 100.0f);
 	gs_set_viewport(x, y, newCX, newCY);
-	obs_source_video_render(window->source);
+	obs_source_video_render(source);
 
 	gs_set_linear_srgb(previous);
 	gs_projection_pop();
@@ -522,6 +536,11 @@ void OBSBasicProperties::Init()
 
 int OBSBasicProperties::CheckSettings()
 {
+	OBSSource source = GetSource();
+
+	if (!source)
+		return -1;
+
 	OBSDataAutoRelease currentSettings = obs_source_get_settings(source);
 	const char *oldSettingsJson = obs_data_get_json(oldSettings);
 	const char *currentSettingsJson = obs_data_get_json(currentSettings);
@@ -531,6 +550,11 @@ int OBSBasicProperties::CheckSettings()
 
 bool OBSBasicProperties::ConfirmQuit()
 {
+	OBSSource source = GetSource();
+
+	if (!source)
+		return true;
+
 	QMessageBox::StandardButton button;
 
 	button = OBSMessageBox::question(
@@ -557,4 +581,9 @@ bool OBSBasicProperties::ConfirmQuit()
 		break;
 	}
 	return true;
+}
+
+OBSSource OBSBasicProperties::GetSource()
+{
+	return OBSGetStrongRef(weakSource);
 }

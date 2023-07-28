@@ -36,7 +36,7 @@ private:
 	OBSBasic *main;
 
 	std::unique_ptr<Ui::OBSBasicFilters> ui;
-	OBSSource source;
+	OBSWeakSourceAutoRelease weakSource;
 	OBSPropertiesView *view = nullptr;
 
 	OBSSignal addSignal;
@@ -80,6 +80,8 @@ private:
 	int noPreviewMargin;
 
 	bool editActive = false;
+
+	OBSSource GetSource();
 
 private slots:
 	void AddFilter(OBSSource filter, bool focus = true);
@@ -133,7 +135,7 @@ public:
 
 	inline void UpdateSource(obs_source_t *target)
 	{
-		if (source == target)
+		if (OBSGetStrongRef(weakSource) == target)
 			UpdateFilters();
 	}
 
