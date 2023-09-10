@@ -159,8 +159,7 @@ static bool dstr_from_cfstring(struct dstr *str, CFStringRef ref)
 
 struct obs_hotkeys_platform {
     volatile long refs;
-    CFTypeRef monitor;
-    CFTypeRef local_monitor;
+    CFMachPortRef eventTap;
     bool is_key_down[OBS_KEY_LAST_VALUE];
     TISInputSourceRef tis;
     CFDataRef layout_data;
@@ -646,18 +645,38 @@ fail:
     return false;
 }
 
-static void handle_monitor_event(obs_hotkeys_platform_t *plat, NSEvent *event)
+static CGEventRef event_tap_callback(CGEventTapProxy proxy __unused, CGEventType type, CGEventRef event, void *userInfo)
 {
-    if (event.type == NSEventTypeFlagsChanged) {
-        NSEventModifierFlags flags = event.modifierFlags;
-        plat->is_key_down[OBS_KEY_CAPSLOCK] = !!(flags & NSEventModifierFlagCapsLock);
-        plat->is_key_down[OBS_KEY_SHIFT] = !!(flags & NSEventModifierFlagShift);
-        plat->is_key_down[OBS_KEY_ALT] = !!(flags & NSEventModifierFlagOption);
-        plat->is_key_down[OBS_KEY_META] = !!(flags & NSEventModifierFlagCommand);
-        plat->is_key_down[OBS_KEY_CONTROL] = !!(flags & NSEventModifierFlagControl);
-    } else if (event.type == NSEventTypeKeyDown || event.type == NSEventTypeKeyUp) {
-        plat->is_key_down[obs_key_from_virtual_key(event.keyCode)] = (event.type == NSEventTypeKeyDown);
+    obs_hotkeys_platform_t *plat = userInfo;
+    switch (type) {
+        case kCGEventKeyDown: {
+            const int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+            plat->is_key_down[obs_key_from_virtual_key(keycode)] = true;
+            break;
+        }
+        case kCGEventKeyUp: {
+            const int64_t keycode = CGEventGetIntegerValueField(event, kCGKeyboardEventKeycode);
+            plat->is_key_down[obs_key_from_virtual_key(keycode)] = false;
+            break;
+        }
+        case kCGEventFlagsChanged: {
+            const CGEventFlags flags = CGEventGetFlags(event);
+            plat->is_key_down[OBS_KEY_SHIFT] = !!(flags & kCGEventFlagMaskShift);
+            plat->is_key_down[OBS_KEY_ALT] = !!(flags & kCGEventFlagMaskAlternate);
+            plat->is_key_down[OBS_KEY_META] = !!(flags & kCGEventFlagMaskCommand);
+            plat->is_key_down[OBS_KEY_CONTROL] = !!(flags & kCGEventFlagMaskControl);
+            break;
+        }
+        case kCGEventTapDisabledByTimeout: {
+            blog(LOG_DEBUG, "hotkeys-cocoa: Hotkey event tap disabled by timeout. Reenabling...");
+            CGEventTapEnable(plat->eventTap, true);
+            break;
+        }
+        default: {
+            blog(LOG_ERROR, "hotkeys-cocoa: Received unexpected event with code '%d'", type);
+        }
     }
+    return event;
 }
 
 static bool init_hotkeys_platform(obs_hotkeys_platform_t **plat_)
@@ -672,22 +691,26 @@ static bool init_hotkeys_platform(obs_hotkeys_platform_t **plat_)
         return false;
     }
 
-    void (^handler)(NSEvent *) = ^(NSEvent *event) {
-        handle_monitor_event(plat, event);
-    };
-    plat->monitor = (__bridge CFTypeRef)
-        [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskKeyDown | NSEventMaskKeyUp | NSEventMaskFlagsChanged
-                                               handler:handler];
+    bool hasPermissions = CGPreflightListenEventAccess();
+    if (hasPermissions) {
+        plat->eventTap = CGEventTapCreate(kCGHIDEventTap, kCGHeadInsertEventTap, kCGEventTapOptionListenOnly,
+                                          CGEventMaskBit(kCGEventKeyDown) | CGEventMaskBit(kCGEventKeyUp) |
+                                              CGEventMaskBit(kCGEventFlagsChanged),
+                                          event_tap_callback, plat);
 
-    NSEvent *_Nullable (^local_handler)(NSEvent *event) = ^NSEvent *_Nullable(NSEvent *event)
-    {
-        handle_monitor_event(plat, event);
+        if (!plat->eventTap) {
+            blog(LOG_WARNING, "hotkeys-cocoa: Couldn't create hotkey event tap.");
+            goto fail;
+        }
 
-        return event;
-    };
-    plat->local_monitor = (__bridge CFTypeRef)
-        [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskKeyDown | NSEventMaskKeyUp | NSEventMaskFlagsChanged
-                                              handler:local_handler];
+        CFRunLoopSourceRef source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, plat->eventTap, 0);
+        CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopCommonModes);
+        CFRelease(source);
+
+        CGEventTapEnable(plat->eventTap, true);
+    } else {
+        blog(LOG_INFO, "hotkeys-cocoa: No permissions, could not add global hotkeys.");
+    }
 
     plat->tis = TISCopyCurrentKeyboardLayoutInputSource();
     plat->layout_data = (CFDataRef) TISGetInputSourceProperty(plat->tis, kTISPropertyUnicodeKeyLayoutData);
@@ -713,14 +736,10 @@ static inline void free_hotkeys_platform(obs_hotkeys_platform_t *plat)
     if (!plat)
         return;
 
-    if (plat->monitor) {
-        [NSEvent removeMonitor:(__bridge id _Nonnull)(plat->monitor)];
-        plat->monitor = NULL;
-    }
-
-    if (plat->local_monitor) {
-        [NSEvent removeMonitor:(__bridge id _Nonnull)(plat->local_monitor)];
-        plat->local_monitor = NULL;
+    if (plat->eventTap) {
+        CGEventTapEnable(plat->eventTap, false);
+        CFRelease(plat->eventTap);
+        plat->eventTap = NULL;
     }
 
     if (plat->tis) {
