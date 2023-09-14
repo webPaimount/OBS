@@ -2531,8 +2531,8 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 			CheckPermission(kAudioDeviceAccess);
 		MacPermissionStatus video_permission =
 			CheckPermission(kVideoDeviceAccess);
-		MacPermissionStatus accessibility_permission =
-			CheckPermission(kAccessibility);
+		MacPermissionStatus input_monitoring_permission =
+			CheckPermission(kInputMonitoring);
 		MacPermissionStatus screen_permission =
 			CheckPermission(kScreenCapture);
 
@@ -2543,7 +2543,7 @@ static int run_program(fstream &logFile, int argc, char *argv[])
 		    MACOS_PERMISSIONS_DIALOG_VERSION) {
 			OBSPermissions check(nullptr, screen_permission,
 					     video_permission, audio_permission,
-					     accessibility_permission);
+					     input_monitoring_permission);
 			check.exec();
 		}
 #endif
