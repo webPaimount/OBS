@@ -169,8 +169,8 @@ static void obs_qsv_defaults(obs_data_t *settings, int ver,
 {
 	obs_data_set_default_string(settings, "target_usage",
 				    "TU4: Balanced (Medium Quality)");
-	obs_data_set_default_int(settings, "bitrate", 2500);
-	obs_data_set_default_int(settings, "max_bitrate", 3000);
+	obs_data_set_default_int(settings, "bitrate", 8000);
+	obs_data_set_default_int(settings, "max_bitrate", 10000);
 	obs_data_set_default_string(settings, "profile",
 				    codec == QSV_CODEC_AVC ? "high" : "main");
 	obs_data_set_default_string(settings, "rate_control", "CBR");
