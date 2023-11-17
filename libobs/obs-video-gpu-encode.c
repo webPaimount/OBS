@@ -56,8 +56,7 @@ static void *gpu_encode_thread(struct obs_core_video_mix *video)
 		video_output_inc_texture_frames(video->video);
 
 		for (size_t i = 0; i < video->gpu_encoders.num; i++) {
-			obs_encoder_t *encoder = obs_encoder_get_ref(
-				video->gpu_encoders.array[i]);
+			obs_encoder_t *encoder = obs_encoder_get_ref(video->gpu_encoders.array[i]);
 			if (encoder)
 				da_push_back(encoders, &encoder);
 		}
@@ -75,14 +74,12 @@ static void *gpu_encode_thread(struct obs_core_video_mix *video)
 			obs_encoder_t *encoder = encoders.array[i];
 			struct obs_encoder *pair = encoder->paired_encoder;
 
-			pkt.timebase_num = encoder->timebase_num *
-					   encoder->frame_rate_divisor;
+			pkt.timebase_num = encoder->timebase_num * encoder->frame_rate_divisor;
 			pkt.timebase_den = encoder->timebase_den;
 			pkt.encoder = encoder;
 
 			if (!encoder->first_received && pair) {
-				if (!pair->first_received ||
-				    pair->first_raw_ts > timestamp) {
+				if (!pair->first_received || pair->first_raw_ts > timestamp) {
 					continue;
 				}
 			}
@@ -92,16 +89,14 @@ static void *gpu_encode_thread(struct obs_core_video_mix *video)
 
 			if (encoder->reconfigure_requested) {
 				encoder->reconfigure_requested = false;
-				encoder->info.update(encoder->context.data,
-						     encoder->context.settings);
+				encoder->info.update(encoder->context.data, encoder->context.settings);
 			}
 
 			// an explicit counter is used instead of remainder calculation
 			// to allow multiple encoders started at the same time to start on
 			// the same frame
 			skip = encoder->frame_rate_divisor_counter++;
-			if (encoder->frame_rate_divisor_counter ==
-			    encoder->frame_rate_divisor)
+			if (encoder->frame_rate_divisor_counter == encoder->frame_rate_divisor)
 				encoder->frame_rate_divisor_counter = 0;
 			if (skip)
 				continue;
@@ -114,17 +109,13 @@ static void *gpu_encode_thread(struct obs_core_video_mix *video)
 			else
 				next_key++;
 
-			success = encoder->info.encode_texture(
-				encoder->context.data, tf.handle,
-				encoder->cur_pts, lock_key, &next_key, &pkt,
-				&received);
-			send_off_encoder_packet(encoder, success, received,
-						&pkt);
+			success = encoder->info.encode_texture(encoder->context.data, tf.handle, encoder->cur_pts,
+							       lock_key, &next_key, &pkt, &received);
+			send_off_encoder_packet(encoder, success, received, &pkt);
 
 			lock_key = next_key;
 
-			encoder->cur_pts += encoder->timebase_num *
-					    encoder->frame_rate_divisor;
+			encoder->cur_pts += encoder->timebase_num * encoder->frame_rate_divisor;
 		}
 
 		/* -------------- */
@@ -135,13 +126,11 @@ static void *gpu_encode_thread(struct obs_core_video_mix *video)
 
 		if (--tf.count) {
 			tf.timestamp += interval;
-			circlebuf_push_front(&video->gpu_encoder_queue, &tf,
-					     sizeof(tf));
+			circlebuf_push_front(&video->gpu_encoder_queue, &tf, sizeof(tf));
 
 			video_output_inc_texture_skipped_frames(video->video);
 		} else {
-			circlebuf_push_back(&video->gpu_encoder_avail_queue,
-					    &tf, sizeof(tf));
+			circlebuf_push_back(&video->gpu_encoder_avail_queue, &tf, sizeof(tf));
 		}
 
 		pthread_mutex_unlock(&video->gpu_encoder_mutex);
@@ -163,8 +152,7 @@ static void *gpu_encode_thread(struct obs_core_video_mix *video)
 bool init_gpu_encoding(struct obs_core_video_mix *video)
 {
 #ifdef _WIN32
-	const struct video_output_info *info =
-		video_output_get_info(video->video);
+	const struct video_output_info *info = video_output_get_info(video->video);
 
 	video->gpu_encode_stop = false;
 
@@ -174,13 +162,11 @@ bool init_gpu_encoding(struct obs_core_video_mix *video)
 		gs_texture_t *tex_uv;
 
 		if (info->format == VIDEO_FORMAT_P010) {
-			gs_texture_create_p010(
-				&tex, &tex_uv, info->width, info->height,
-				GS_RENDER_TARGET | GS_SHARED_KM_TEX);
+			gs_texture_create_p010(&tex, &tex_uv, info->width, info->height,
+					       GS_RENDER_TARGET | GS_SHARED_KM_TEX);
 		} else {
-			gs_texture_create_nv12(
-				&tex, &tex_uv, info->width, info->height,
-				GS_RENDER_TARGET | GS_SHARED_KM_TEX);
+			gs_texture_create_nv12(&tex, &tex_uv, info->width, info->height,
+					       GS_RENDER_TARGET | GS_SHARED_KM_TEX);
 		}
 		if (!tex) {
 			return false;
@@ -188,21 +174,16 @@ bool init_gpu_encoding(struct obs_core_video_mix *video)
 
 		uint32_t handle = gs_texture_get_shared_handle(tex);
 
-		struct obs_tex_frame frame = {.tex = tex,
-					      .tex_uv = tex_uv,
-					      .handle = handle};
+		struct obs_tex_frame frame = {.tex = tex, .tex_uv = tex_uv, .handle = handle};
 
-		circlebuf_push_back(&video->gpu_encoder_avail_queue, &frame,
-				    sizeof(frame));
+		circlebuf_push_back(&video->gpu_encoder_avail_queue, &frame, sizeof(frame));
 	}
 
 	if (os_sem_init(&video->gpu_encode_semaphore, 0) != 0)
 		return false;
-	if (os_event_init(&video->gpu_encode_inactive, OS_EVENT_TYPE_MANUAL) !=
-	    0)
+	if (os_event_init(&video->gpu_encode_inactive, OS_EVENT_TYPE_MANUAL) != 0)
 		return false;
-	if (pthread_create(&video->gpu_encode_thread, NULL, gpu_encode_thread,
-			   video) != 0)
+	if (pthread_create(&video->gpu_encode_thread, NULL, gpu_encode_thread, video) != 0)
 		return false;
 
 	os_event_signal(video->gpu_encode_inactive);

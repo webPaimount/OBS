@@ -39,8 +39,7 @@ bool obs_module_load(void)
 		obs_data_set_bool(obs_settings, "vcamEnabled", true);
 	} else {
 		obs_data_set_bool(obs_settings, "vcamEnabled", false);
-		blog(LOG_WARNING,
-		     "v4l2loopback not installed, virtual camera disabled");
+		blog(LOG_WARNING, "v4l2loopback not installed, virtual camera disabled");
 	}
 
 	obs_apply_private_data(obs_settings);

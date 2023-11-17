@@ -42,8 +42,7 @@ static bool create_pipe(HANDLE *input, HANDLE *output)
 	return true;
 }
 
-static inline bool create_process(const char *cmd_line, HANDLE stdin_handle,
-				  HANDLE stdout_handle, HANDLE stderr_handle,
+static inline bool create_process(const char *cmd_line, HANDLE stdin_handle, HANDLE stdout_handle, HANDLE stderr_handle,
 				  HANDLE *process)
 {
 	PROCESS_INFORMATION pi = {0};
@@ -64,8 +63,7 @@ static inline bool create_process(const char *cmd_line, HANDLE stdin_handle,
 
 	os_utf8_to_wcs_ptr(cmd_line, 0, &cmd_line_w);
 	if (cmd_line_w) {
-		success = !!CreateProcessW(NULL, cmd_line_w, NULL, NULL, true,
-					   flags, NULL, NULL, &si, &pi);
+		success = !!CreateProcessW(NULL, cmd_line_w, NULL, NULL, true, flags, NULL, NULL, &si, &pi);
 
 		if (success) {
 			*process = pi.hProcess;
@@ -73,8 +71,7 @@ static inline bool create_process(const char *cmd_line, HANDLE stdin_handle,
 		} else {
 			// Not logging the full command line is intentional
 			// as it may contain stream keys etc.
-			blog(LOG_ERROR, "CreateProcessW failed: %lu",
-			     GetLastError());
+			blog(LOG_ERROR, "CreateProcessW failed: %lu", GetLastError());
 		}
 
 		bfree(cmd_line_w);
@@ -83,8 +80,7 @@ static inline bool create_process(const char *cmd_line, HANDLE stdin_handle,
 	return success;
 }
 
-os_process_pipe_t *os_process_pipe_create(const char *cmd_line,
-					  const char *type)
+os_process_pipe_t *os_process_pipe_create(const char *cmd_line, const char *type)
 {
 	os_process_pipe_t *pp = NULL;
 	bool read_pipe;
@@ -110,8 +106,7 @@ os_process_pipe_t *os_process_pipe_create(const char *cmd_line,
 
 	read_pipe = *type == 'r';
 
-	success = !!SetHandleInformation(read_pipe ? input : output,
-					 HANDLE_FLAG_INHERIT, false);
+	success = !!SetHandleInformation(read_pipe ? input : output, HANDLE_FLAG_INHERIT, false);
 	if (!success) {
 		goto error;
 	}
@@ -121,9 +116,7 @@ os_process_pipe_t *os_process_pipe_create(const char *cmd_line,
 		goto error;
 	}
 
-	success = create_process(cmd_line, read_pipe ? NULL : input,
-				 read_pipe ? output : NULL, err_output,
-				 &process);
+	success = create_process(cmd_line, read_pipe ? NULL : input, read_pipe ? output : NULL, err_output, &process);
 	if (!success) {
 		goto error;
 	}
@@ -186,8 +179,7 @@ size_t os_process_pipe_read(os_process_pipe_t *pp, uint8_t *data, size_t len)
 	return 0;
 }
 
-size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data,
-				size_t len)
+size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data, size_t len)
 {
 	DWORD bytes_read;
 	bool success;
@@ -196,8 +188,7 @@ size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data,
 		return 0;
 	}
 
-	success =
-		!!ReadFile(pp->handle_err, data, (DWORD)len, &bytes_read, NULL);
+	success = !!ReadFile(pp->handle_err, data, (DWORD)len, &bytes_read, NULL);
 	if (success && bytes_read) {
 		return bytes_read;
 	} else
@@ -206,8 +197,7 @@ size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data,
 	return 0;
 }
 
-size_t os_process_pipe_write(os_process_pipe_t *pp, const uint8_t *data,
-			     size_t len)
+size_t os_process_pipe_write(os_process_pipe_t *pp, const uint8_t *data, size_t len)
 {
 	DWORD bytes_written;
 	bool success;
@@ -219,8 +209,7 @@ size_t os_process_pipe_write(os_process_pipe_t *pp, const uint8_t *data,
 		return 0;
 	}
 
-	success =
-		!!WriteFile(pp->handle, data, (DWORD)len, &bytes_written, NULL);
+	success = !!WriteFile(pp->handle, data, (DWORD)len, &bytes_written, NULL);
 	if (success && bytes_written) {
 		return bytes_written;
 	}

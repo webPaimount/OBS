@@ -27,8 +27,7 @@ protected:
 
 		switch (event->type()) {
 		case QEvent::PlatformSurface:
-			surfaceEvent =
-				static_cast<QPlatformSurfaceEvent *>(event);
+			surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
 
 			switch (surfaceEvent->surfaceEventType()) {
 			case QPlatformSurfaceEvent::SurfaceAboutToBeDestroyed:
@@ -52,18 +51,15 @@ static inline long long color_to_int(const QColor &color)
 		return ((val & 0xff) << shift);
 	};
 
-	return shift(color.red(), 0) | shift(color.green(), 8) |
-	       shift(color.blue(), 16) | shift(color.alpha(), 24);
+	return shift(color.red(), 0) | shift(color.green(), 8) | shift(color.blue(), 16) | shift(color.alpha(), 24);
 }
 
 static inline QColor rgba_to_color(uint32_t rgba)
 {
-	return QColor::fromRgb(rgba & 0xFF, (rgba >> 8) & 0xFF,
-			       (rgba >> 16) & 0xFF, (rgba >> 24) & 0xFF);
+	return QColor::fromRgb(rgba & 0xFF, (rgba >> 8) & 0xFF, (rgba >> 16) & 0xFF, (rgba >> 24) & 0xFF);
 }
 
-OBSQTDisplay::OBSQTDisplay(QWidget *parent, Qt::WindowFlags flags)
-	: QWidget(parent, flags)
+OBSQTDisplay::OBSQTDisplay(QWidget *parent, Qt::WindowFlags flags) : QWidget(parent, flags)
 {
 	setAttribute(Qt::WA_PaintOnScreen);
 	setAttribute(Qt::WA_StaticContents);
@@ -84,8 +80,7 @@ OBSQTDisplay::OBSQTDisplay(QWidget *parent, Qt::WindowFlags flags)
 			CreateDisplay();
 		} else {
 			QSize size = GetPixelSize(this);
-			obs_display_resize(display, size.width(),
-					   size.height());
+			obs_display_resize(display, size.width(), size.height());
 		}
 	};
 

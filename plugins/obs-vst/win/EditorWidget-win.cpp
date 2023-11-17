@@ -28,15 +28,14 @@ void EditorWidget::buildEffectContainer(AEffect *effect)
 	RegisterClassExW(&wcex);
 
 	const auto style = WS_CAPTION | WS_THICKFRAME | WS_OVERLAPPEDWINDOW;
-	windowHandle = CreateWindowW(wcex.lpszClassName, TEXT(""), style, 0, 0,
-				     0, 0, nullptr, nullptr, nullptr, nullptr);
+	windowHandle =
+		CreateWindowW(wcex.lpszClassName, TEXT(""), style, 0, 0, 0, 0, nullptr, nullptr, nullptr, nullptr);
 
 	// set pointer to vst effect for window long
 	LONG_PTR wndPtr = (LONG_PTR)effect;
 	SetWindowLongPtr(windowHandle, -21 /*GWLP_USERDATA*/, wndPtr);
 
-	QWidget *widget = QWidget::createWindowContainer(
-		QWindow::fromWinId((WId)windowHandle), nullptr);
+	QWidget *widget = QWidget::createWindowContainer(QWindow::fromWinId((WId)windowHandle), nullptr);
 	widget->move(0, 0);
 	QGridLayout *layout = new QGridLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
@@ -49,10 +48,8 @@ void EditorWidget::buildEffectContainer(AEffect *effect)
 	VstRect *vstRect = nullptr;
 	effect->dispatcher(effect, effEditGetRect, 0, 0, &vstRect, 0);
 	if (vstRect) {
-		widget->resize(vstRect->right - vstRect->left,
-			       vstRect->bottom - vstRect->top);
-		resize(vstRect->right - vstRect->left,
-		       vstRect->bottom - vstRect->top);
+		widget->resize(vstRect->right - vstRect->left, vstRect->bottom - vstRect->top);
+		resize(vstRect->right - vstRect->left, vstRect->bottom - vstRect->top);
 	} else {
 		widget->resize(300, 300);
 	}
@@ -64,8 +61,7 @@ void EditorWidget::handleResizeRequest(int, int)
 	// so we must resize window manually
 
 	// get pointer to vst effect from window long
-	LONG_PTR wndPtr = (LONG_PTR)GetWindowLongPtrW(windowHandle,
-						      -21 /*GWLP_USERDATA*/);
+	LONG_PTR wndPtr = (LONG_PTR)GetWindowLongPtrW(windowHandle, -21 /*GWLP_USERDATA*/);
 	AEffect *effect = (AEffect *)(wndPtr);
 	VstRect *rec = nullptr;
 

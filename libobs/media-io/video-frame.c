@@ -20,8 +20,7 @@
 #define ALIGN_SIZE(size, align) size = (((size) + (align - 1)) & (~(align - 1)))
 
 /* messy code alarm */
-void video_frame_init(struct video_frame *frame, enum video_format format,
-		      uint32_t width, uint32_t height)
+void video_frame_init(struct video_frame *frame, enum video_format format, uint32_t width, uint32_t height)
 {
 	size_t size;
 	size_t offsets[MAX_AV_PLANES];
@@ -82,8 +81,7 @@ void video_frame_init(struct video_frame *frame, enum video_format format,
 	case VIDEO_FORMAT_YVYU:
 	case VIDEO_FORMAT_YUY2:
 	case VIDEO_FORMAT_UYVY: {
-		const uint32_t double_width =
-			((width + 1) & (UINT32_MAX - 1)) * 2;
+		const uint32_t double_width = ((width + 1) & (UINT32_MAX - 1)) * 2;
 		size = double_width * height;
 		ALIGN_SIZE(size, alignment);
 		frame->data[0] = bmalloc(size);
@@ -349,8 +347,7 @@ void video_frame_init(struct video_frame *frame, enum video_format format,
 	}
 }
 
-void video_frame_copy(struct video_frame *dst, const struct video_frame *src,
-		      enum video_format format, uint32_t cy)
+void video_frame_copy(struct video_frame *dst, const struct video_frame *src, enum video_format format, uint32_t cy)
 {
 	switch (format) {
 	case VIDEO_FORMAT_NONE:

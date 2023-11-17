@@ -43,9 +43,8 @@
 #include "vaapi-utils.h"
 #include "obs-ffmpeg-formats.h"
 
-#define do_log(level, format, ...)                          \
-	blog(level, "[FFmpeg VAAPI encoder: '%s'] " format, \
-	     obs_encoder_get_name(enc->encoder), ##__VA_ARGS__)
+#define do_log(level, format, ...) \
+	blog(level, "[FFmpeg VAAPI encoder: '%s'] " format, obs_encoder_get_name(enc->encoder), ##__VA_ARGS__)
 
 #define warn(format, ...) do_log(LOG_WARNING, format, ##__VA_ARGS__)
 #define info(format, ...) do_log(LOG_INFO, format, ##__VA_ARGS__)
@@ -111,9 +110,7 @@ static void h264_vaapi_video_info(void *data, struct video_scale_info *info)
 	pref_format = obs_encoder_get_preferred_video_format(enc->encoder);
 
 	if (!h264_valid_format(pref_format)) {
-		pref_format = h264_valid_format(info->format)
-				      ? info->format
-				      : VIDEO_FORMAT_NV12;
+		pref_format = h264_valid_format(info->format) ? info->format : VIDEO_FORMAT_NV12;
 	}
 
 	info->format = pref_format;
@@ -128,9 +125,7 @@ static void hevc_vaapi_video_info(void *data, struct video_scale_info *info)
 	pref_format = obs_encoder_get_preferred_video_format(enc->encoder);
 
 	if (!hevc_valid_format(pref_format)) {
-		pref_format = hevc_valid_format(info->format)
-				      ? info->format
-				      : VIDEO_FORMAT_NV12;
+		pref_format = hevc_valid_format(info->format) ? info->format : VIDEO_FORMAT_NV12;
 	}
 
 	info->format = pref_format;
@@ -141,11 +136,9 @@ static bool vaapi_init_codec(struct vaapi_encoder *enc, const char *path)
 {
 	int ret;
 
-	ret = av_hwdevice_ctx_create(&enc->vadevice_ref, AV_HWDEVICE_TYPE_VAAPI,
-				     path, NULL, 0);
+	ret = av_hwdevice_ctx_create(&enc->vadevice_ref, AV_HWDEVICE_TYPE_VAAPI, path, NULL, 0);
 	if (ret < 0) {
-		warn("Failed to create VAAPI device context: %s",
-		     av_err2str(ret));
+		warn("Failed to create VAAPI device context: %s", av_err2str(ret));
 		return false;
 	}
 
@@ -155,8 +148,7 @@ static bool vaapi_init_codec(struct vaapi_encoder *enc, const char *path)
 		return false;
 	}
 
-	AVHWFramesContext *frames_ctx =
-		(AVHWFramesContext *)enc->vaframes_ref->data;
+	AVHWFramesContext *frames_ctx = (AVHWFramesContext *)enc->vaframes_ref->data;
 	frames_ctx->format = AV_PIX_FMT_VAAPI;
 	frames_ctx->sw_format = enc->context->pix_fmt;
 	frames_ctx->width = enc->context->width;
@@ -218,11 +210,10 @@ typedef struct {
 static const rc_mode_t *get_rc_mode(const char *name)
 {
 	/* Set "allowed" options per Rate Control */
-	static const rc_mode_t RC_MODES[] = {
-		{.name = "CBR", .qp = false, .bitrate = true, .maxrate = false},
-		{.name = "CQP", .qp = true, .bitrate = false, .maxrate = false},
-		{.name = "VBR", .qp = false, .bitrate = true, .maxrate = true},
-		{0}};
+	static const rc_mode_t RC_MODES[] = {{.name = "CBR", .qp = false, .bitrate = true, .maxrate = false},
+					     {.name = "CQP", .qp = true, .bitrate = false, .maxrate = false},
+					     {.name = "VBR", .qp = false, .bitrate = true, .maxrate = true},
+					     {0}};
 
 	const rc_mode_t *rc_mode = RC_MODES;
 
@@ -238,8 +229,7 @@ static bool vaapi_update(void *data, obs_data_t *settings, bool hevc)
 
 	const char *device = obs_data_get_string(settings, "vaapi_device");
 
-	const char *rate_control =
-		obs_data_get_string(settings, "rate_control");
+	const char *rate_control = obs_data_get_string(settings, "rate_control");
 	const rc_mode_t *rc_mode = get_rc_mode(rate_control);
 	bool cbr = strcmp(rc_mode->name, "CBR") == 0;
 
@@ -250,12 +240,8 @@ static bool vaapi_update(void *data, obs_data_t *settings, bool hevc)
 	av_opt_set_int(enc->context->priv_data, "qp", qp, 0);
 
 	int level = (int)obs_data_get_int(settings, "level");
-	int bitrate = rc_mode->bitrate
-			      ? (int)obs_data_get_int(settings, "bitrate")
-			      : 0;
-	int maxrate = rc_mode->maxrate
-			      ? (int)obs_data_get_int(settings, "maxrate")
-			      : 0;
+	int bitrate = rc_mode->bitrate ? (int)obs_data_get_int(settings, "bitrate") : 0;
+	int maxrate = rc_mode->maxrate ? (int)obs_data_get_int(settings, "maxrate") : 0;
 	int keyint_sec = (int)obs_data_get_int(settings, "keyint_sec");
 
 	/* For Rate Control which allows maxrate, FFMPEG will give
@@ -278,8 +264,7 @@ static bool vaapi_update(void *data, obs_data_t *settings, bool hevc)
 
 #ifdef ENABLE_HEVC
 	if (hevc) {
-		if ((profile == FF_PROFILE_HEVC_MAIN) &&
-		    (info.format == VIDEO_FORMAT_P010)) {
+		if ((profile == FF_PROFILE_HEVC_MAIN) && (info.format == VIDEO_FORMAT_P010)) {
 			warn("Forcing Main10 for P010");
 			profile = FF_PROFILE_HEVC_MAIN_10;
 		}
@@ -298,19 +283,15 @@ static bool vaapi_update(void *data, obs_data_t *settings, bool hevc)
 	enc->context->level = level;
 	enc->context->bit_rate = bitrate * 1000;
 	enc->context->rc_max_rate = maxrate * 1000;
-	enc->context->rc_initial_buffer_occupancy =
-		(maxrate ? maxrate : bitrate) * 1000;
+	enc->context->rc_initial_buffer_occupancy = (maxrate ? maxrate : bitrate) * 1000;
 
 	enc->context->width = obs_encoder_get_width(enc->encoder);
 	enc->context->height = obs_encoder_get_height(enc->encoder);
 
 	enc->context->time_base = (AVRational){voi->fps_den, voi->fps_num};
-	const enum AVPixelFormat pix_fmt =
-		obs_to_ffmpeg_video_format(info.format);
+	const enum AVPixelFormat pix_fmt = obs_to_ffmpeg_video_format(info.format);
 	enc->context->pix_fmt = pix_fmt;
-	enc->context->color_range = info.range == VIDEO_RANGE_FULL
-					    ? AVCOL_RANGE_JPEG
-					    : AVCOL_RANGE_MPEG;
+	enc->context->color_range = info.range == VIDEO_RANGE_FULL ? AVCOL_RANGE_JPEG : AVCOL_RANGE_MPEG;
 
 	enum AVColorSpace colorspace = AVCOL_SPC_UNSPECIFIED;
 	switch (info.colorspace) {
@@ -345,12 +326,10 @@ static bool vaapi_update(void *data, obs_data_t *settings, bool hevc)
 	}
 
 	enc->context->colorspace = colorspace;
-	enc->context->chroma_sample_location =
-		determine_chroma_location(pix_fmt, colorspace);
+	enc->context->chroma_sample_location = determine_chroma_location(pix_fmt, colorspace);
 
 	if (keyint_sec > 0) {
-		enc->context->gop_size =
-			keyint_sec * voi->fps_num / voi->fps_den;
+		enc->context->gop_size = keyint_sec * voi->fps_num / voi->fps_den;
 	} else {
 		enc->context->gop_size = 120;
 	}
@@ -378,9 +357,8 @@ static bool vaapi_update(void *data, obs_data_t *settings, bool hevc)
 	     "\theight:       %d\n"
 	     "\tb-frames:     %d\n"
 	     "\tffmpeg opts:  %s\n",
-	     device, rate_control, profile, level, qp, bitrate, maxrate,
-	     enc->context->gop_size, enc->context->width, enc->context->height,
-	     enc->context->max_b_frames, ffmpeg_opts);
+	     device, rate_control, profile, level, qp, bitrate, maxrate, enc->context->gop_size, enc->context->width,
+	     enc->context->height, enc->context->max_b_frames, ffmpeg_opts);
 
 	return vaapi_init_codec(enc, device);
 }
@@ -418,8 +396,7 @@ static void vaapi_destroy(void *data)
 	bfree(enc);
 }
 
-static void *vaapi_create_internal(obs_data_t *settings, obs_encoder_t *encoder,
-				   bool hevc)
+static void *vaapi_create_internal(obs_data_t *settings, obs_encoder_t *encoder, bool hevc)
 {
 	struct vaapi_encoder *enc;
 
@@ -466,34 +443,29 @@ static void *hevc_vaapi_create(obs_data_t *settings, obs_encoder_t *encoder)
 }
 #endif
 
-static inline void copy_data(AVFrame *pic, const struct encoder_frame *frame,
-			     int height, enum AVPixelFormat format)
+static inline void copy_data(AVFrame *pic, const struct encoder_frame *frame, int height, enum AVPixelFormat format)
 {
 	int h_chroma_shift, v_chroma_shift;
-	av_pix_fmt_get_chroma_sub_sample(format, &h_chroma_shift,
-					 &v_chroma_shift);
+	av_pix_fmt_get_chroma_sub_sample(format, &h_chroma_shift, &v_chroma_shift);
 	for (int plane = 0; plane < MAX_AV_PLANES; plane++) {
 		if (!frame->data[plane])
 			continue;
 
 		int frame_rowsize = (int)frame->linesize[plane];
 		int pic_rowsize = pic->linesize[plane];
-		int bytes = frame_rowsize < pic_rowsize ? frame_rowsize
-							: pic_rowsize;
+		int bytes = frame_rowsize < pic_rowsize ? frame_rowsize : pic_rowsize;
 		int plane_height = height >> (plane ? v_chroma_shift : 0);
 
 		for (int y = 0; y < plane_height; y++) {
 			int pos_frame = y * frame_rowsize;
 			int pos_pic = y * pic_rowsize;
 
-			memcpy(pic->data[plane] + pos_pic,
-			       frame->data[plane] + pos_frame, bytes);
+			memcpy(pic->data[plane] + pos_pic, frame->data[plane] + pos_frame, bytes);
 		}
 	}
 }
 
-static bool vaapi_encode_internal(void *data, struct encoder_frame *frame,
-				  struct encoder_packet *packet,
+static bool vaapi_encode_internal(void *data, struct encoder_frame *frame, struct encoder_packet *packet,
 				  bool *received_packet, bool hevc)
 {
 	struct vaapi_encoder *enc = data;
@@ -509,8 +481,7 @@ static bool vaapi_encode_internal(void *data, struct encoder_frame *frame,
 
 	ret = av_hwframe_get_buffer(enc->vaframes_ref, hwframe, 0);
 	if (ret < 0) {
-		warn("vaapi_encode: failed to get buffer for hw frame: %s",
-		     av_err2str(ret));
+		warn("vaapi_encode: failed to get buffer for hw frame: %s", av_err2str(ret));
 		goto fail;
 	}
 
@@ -523,15 +494,13 @@ static bool vaapi_encode_internal(void *data, struct encoder_frame *frame,
 
 	ret = av_hwframe_transfer_data(hwframe, enc->vframe, 0);
 	if (ret < 0) {
-		warn("vaapi_encode: failed to upload hw frame: %s",
-		     av_err2str(ret));
+		warn("vaapi_encode: failed to upload hw frame: %s", av_err2str(ret));
 		goto fail;
 	}
 
 	ret = av_frame_copy_props(hwframe, enc->vframe);
 	if (ret < 0) {
-		warn("vaapi_encode: failed to copy props to hw frame: %s",
-		     av_err2str(ret));
+		warn("vaapi_encode: failed to copy props to hw frame: %s", av_err2str(ret));
 		goto fail;
 	}
 
@@ -557,28 +526,21 @@ static bool vaapi_encode_internal(void *data, struct encoder_frame *frame,
 			enc->first_packet = false;
 #ifdef ENABLE_HEVC
 			if (hevc) {
-				obs_extract_hevc_headers(
-					enc->packet->data, enc->packet->size,
-					&new_packet, &size, &enc->header,
-					&enc->header_size, &enc->sei,
-					&enc->sei_size);
+				obs_extract_hevc_headers(enc->packet->data, enc->packet->size, &new_packet, &size,
+							 &enc->header, &enc->header_size, &enc->sei, &enc->sei_size);
 			} else
 #else
 			UNUSED_PARAMETER(hevc);
 #endif
 			{
-				obs_extract_avc_headers(
-					enc->packet->data, enc->packet->size,
-					&new_packet, &size, &enc->header,
-					&enc->header_size, &enc->sei,
-					&enc->sei_size);
+				obs_extract_avc_headers(enc->packet->data, enc->packet->size, &new_packet, &size,
+							&enc->header, &enc->header_size, &enc->sei, &enc->sei_size);
 			}
 
 			da_copy_array(enc->buffer, new_packet, size);
 			bfree(new_packet);
 		} else {
-			da_copy_array(enc->buffer, enc->packet->data,
-				      enc->packet->size);
+			da_copy_array(enc->buffer, enc->packet->data, enc->packet->size);
 		}
 
 		packet->pts = enc->packet->pts;
@@ -588,13 +550,11 @@ static bool vaapi_encode_internal(void *data, struct encoder_frame *frame,
 		packet->type = OBS_ENCODER_VIDEO;
 #ifdef ENABLE_HEVC
 		if (hevc) {
-			packet->keyframe =
-				obs_hevc_keyframe(packet->data, packet->size);
+			packet->keyframe = obs_hevc_keyframe(packet->data, packet->size);
 		} else
 #endif
 		{
-			packet->keyframe =
-				obs_avc_keyframe(packet->data, packet->size);
+			packet->keyframe = obs_avc_keyframe(packet->data, packet->size);
 		}
 		*received_packet = true;
 	} else {
@@ -610,21 +570,17 @@ fail:
 	return false;
 }
 
-static bool h264_vaapi_encode(void *data, struct encoder_frame *frame,
-			      struct encoder_packet *packet,
+static bool h264_vaapi_encode(void *data, struct encoder_frame *frame, struct encoder_packet *packet,
 			      bool *received_packet)
 {
-	return vaapi_encode_internal(data, frame, packet, received_packet,
-				     false);
+	return vaapi_encode_internal(data, frame, packet, received_packet, false);
 }
 
 #ifdef ENABLE_HEVC
-static bool hevc_vaapi_encode(void *data, struct encoder_frame *frame,
-			      struct encoder_packet *packet,
+static bool hevc_vaapi_encode(void *data, struct encoder_frame *frame, struct encoder_packet *packet,
 			      bool *received_packet)
 {
-	return vaapi_encode_internal(data, frame, packet, received_packet,
-				     true);
+	return vaapi_encode_internal(data, frame, packet, received_packet, true);
 }
 #endif
 
@@ -637,8 +593,7 @@ static void set_visible(obs_properties_t *ppts, const char *name, bool visible)
 static void vaapi_defaults_internal(obs_data_t *settings, bool hevc)
 {
 #ifdef ENABLE_HEVC
-	const char *device = hevc ? vaapi_get_hevc_default_device()
-				  : vaapi_get_h264_default_device();
+	const char *device = hevc ? vaapi_get_hevc_default_device() : vaapi_get_h264_default_device();
 #else
 	const char *const device = vaapi_get_h264_default_device();
 #endif
@@ -646,16 +601,14 @@ static void vaapi_defaults_internal(obs_data_t *settings, bool hevc)
 	obs_data_set_default_string(settings, "vaapi_device", device);
 #ifdef ENABLE_HEVC
 	if (hevc) {
-		obs_data_set_default_int(settings, "profile",
-					 FF_PROFILE_HEVC_MAIN);
+		obs_data_set_default_int(settings, "profile", FF_PROFILE_HEVC_MAIN);
 
 	} else
 #else
 	UNUSED_PARAMETER(hevc);
 #endif
 	{
-		obs_data_set_default_int(settings, "profile",
-					 FF_PROFILE_H264_CONSTRAINED_BASELINE);
+		obs_data_set_default_int(settings, "profile", FF_PROFILE_H264_CONSTRAINED_BASELINE);
 	}
 	obs_data_set_default_int(settings, "level", 40);
 	obs_data_set_default_int(settings, "bitrate", 2500);
@@ -671,8 +624,7 @@ static void vaapi_defaults_internal(obs_data_t *settings, bool hevc)
 		return;
 
 #ifdef ENABLE_HEVC
-	const VAProfile profile = hevc ? VAProfileHEVCMain
-				       : VAProfileH264ConstrainedBaseline;
+	const VAProfile profile = hevc ? VAProfileHEVCMain : VAProfileH264ConstrainedBaseline;
 #else
 	const VAProfile profile = VAProfileH264ConstrainedBaseline;
 #endif
@@ -696,15 +648,13 @@ static void hevc_vaapi_defaults(obs_data_t *settings)
 	vaapi_defaults_internal(settings, true);
 }
 
-static bool vaapi_device_modified(obs_properties_t *ppts, obs_property_t *p,
-				  obs_data_t *settings)
+static bool vaapi_device_modified(obs_properties_t *ppts, obs_property_t *p, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(p);
 
 	const char *device = obs_data_get_string(settings, "vaapi_device");
 	int drm_fd = -1;
-	VADisplay va_dpy =
-		vaapi_open_device(&drm_fd, device, "vaapi_device_modified");
+	VADisplay va_dpy = vaapi_open_device(&drm_fd, device, "vaapi_device_modified");
 	int profile = obs_data_get_int(settings, "profile");
 	obs_property_t *rc_p = obs_properties_get(ppts, "rate_control");
 
@@ -759,13 +709,11 @@ fail:
 	return true;
 }
 
-static bool rate_control_modified(obs_properties_t *ppts, obs_property_t *p,
-				  obs_data_t *settings)
+static bool rate_control_modified(obs_properties_t *ppts, obs_property_t *p, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(p);
 
-	const char *rate_control =
-		obs_data_get_string(settings, "rate_control");
+	const char *rate_control = obs_data_get_string(settings, "rate_control");
 
 	const rc_mode_t *rc_mode = get_rc_mode(rate_control);
 
@@ -777,8 +725,7 @@ static bool rate_control_modified(obs_properties_t *ppts, obs_property_t *p,
 	return true;
 }
 
-static bool get_device_name_from_pci(struct pci_access *pacc, char *pci_slot,
-				     char *buf, int size)
+static bool get_device_name_from_pci(struct pci_access *pacc, char *pci_slot, char *buf, int size)
 {
 	struct pci_filter filter;
 	struct pci_dev *dev;
@@ -792,9 +739,7 @@ static bool get_device_name_from_pci(struct pci_access *pacc, char *pci_slot,
 	for (dev = pacc->devices; dev; dev = dev->next) {
 		if (pci_filter_match(&filter, dev)) {
 			pci_fill_info(dev, PCI_FILL_IDENT);
-			name = pci_lookup_name(pacc, buf, size,
-					       PCI_LOOKUP_DEVICE,
-					       dev->vendor_id, dev->device_id);
+			name = pci_lookup_name(pacc, buf, size, PCI_LOOKUP_DEVICE, dev->vendor_id, dev->device_id);
 			strcpy(buf, name);
 			return true;
 		}
@@ -807,9 +752,7 @@ static obs_properties_t *vaapi_properties_internal(bool hevc)
 	obs_properties_t *props = obs_properties_create();
 	obs_property_t *list;
 
-	list = obs_properties_add_list(props, "vaapi_device",
-				       obs_module_text("VAAPI.Device"),
-				       OBS_COMBO_TYPE_LIST,
+	list = obs_properties_add_list(props, "vaapi_device", obs_module_text("VAAPI.Device"), OBS_COMBO_TYPE_LIST,
 				       OBS_COMBO_FORMAT_STRING);
 	if (os_file_exists("/dev/dri/by-path")) {
 		os_dir_t *by_path_dir = os_opendir("/dev/dri/by-path");
@@ -823,19 +766,16 @@ static obs_properties_t *vaapi_properties_internal(bool hevc)
 		while ((file = os_readdir(by_path_dir)) != NULL) {
 			// file_name pattern: pci-<pci_slot::12>-<type::{"card","render"}>
 			char *file_name = file->d_name;
-			if (strcmp(file_name, ".") == 0 ||
-			    strcmp(file_name, "..") == 0)
+			if (strcmp(file_name, ".") == 0 || strcmp(file_name, "..") == 0)
 				continue;
 
 			char path[64] = {0};
 
 			// Use the return value of snprintf to prevent truncation warning.
-			int written = snprintf(path, 64, "/dev/dri/by-path/%s",
-					       file_name);
+			int written = snprintf(path, 64, "/dev/dri/by-path/%s", file_name);
 			if (written >= 64)
-				blog(LOG_DEBUG,
-				     "obs-ffmpeg-vaapi: A format truncation may have occurred."
-				     " This can be ignored since it is quite improbable.");
+				blog(LOG_DEBUG, "obs-ffmpeg-vaapi: A format truncation may have occurred."
+						" This can be ignored since it is quite improbable.");
 
 			type = strrchr(file_name, '-');
 			if (type == NULL)
@@ -846,19 +786,15 @@ static obs_properties_t *vaapi_properties_internal(bool hevc)
 			if (strcmp(type, "render") == 0) {
 				strncpy(pci_slot, file_name + 4, 12);
 				pci_slot[12] = 0;
-				bool name_found = get_device_name_from_pci(
-					pacc, pci_slot, namebuf,
-					sizeof(namebuf));
+				bool name_found = get_device_name_from_pci(pacc, pci_slot, namebuf, sizeof(namebuf));
 
 				if (!vaapi_device_h264_supported(path))
 					continue;
 
 				if (!name_found)
-					obs_property_list_add_string(list, path,
-								     path);
+					obs_property_list_add_string(list, path, path);
 				else
-					obs_property_list_add_string(
-						list, namebuf, path);
+					obs_property_list_add_string(list, namebuf, path);
 			}
 		}
 		pci_cleanup(pacc);
@@ -870,12 +806,10 @@ static obs_properties_t *vaapi_properties_internal(bool hevc)
 			snprintf(path, sizeof(path), "/dev/dri/renderD1%d", i);
 			if (access(path, F_OK) == 0) {
 				char card[128];
-				int ret = snprintf(card, sizeof(card),
-						   "Card%d: %s", i - 28, path);
+				int ret = snprintf(card, sizeof(card), "Card%d: %s", i - 28, path);
 				if (ret >= (int)sizeof(card))
-					blog(LOG_DEBUG,
-					     "obs-ffmpeg-vaapi: A format truncation may have occurred."
-					     " This can be ignored since it is quite improbable.");
+					blog(LOG_DEBUG, "obs-ffmpeg-vaapi: A format truncation may have occurred."
+							" This can be ignored since it is quite improbable.");
 
 				if (!vaapi_device_h264_supported(path))
 					continue;
@@ -889,67 +823,51 @@ static obs_properties_t *vaapi_properties_internal(bool hevc)
 
 	obs_property_set_modified_callback(list, vaapi_device_modified);
 
-	list = obs_properties_add_list(props, "profile",
-				       obs_module_text("Profile"),
-				       OBS_COMBO_TYPE_LIST,
+	list = obs_properties_add_list(props, "profile", obs_module_text("Profile"), OBS_COMBO_TYPE_LIST,
 				       OBS_COMBO_FORMAT_INT);
 	if (hevc) {
 		obs_property_list_add_int(list, "Main", FF_PROFILE_HEVC_MAIN);
-		obs_property_list_add_int(list, "Main10",
-					  FF_PROFILE_HEVC_MAIN_10);
+		obs_property_list_add_int(list, "Main10", FF_PROFILE_HEVC_MAIN_10);
 	} else {
-		obs_property_list_add_int(list,
-					  "Constrained Baseline (default)",
-					  FF_PROFILE_H264_CONSTRAINED_BASELINE);
+		obs_property_list_add_int(list, "Constrained Baseline (default)", FF_PROFILE_H264_CONSTRAINED_BASELINE);
 		obs_property_list_add_int(list, "Main", FF_PROFILE_H264_MAIN);
 		obs_property_list_add_int(list, "High", FF_PROFILE_H264_HIGH);
 	}
 
 	obs_property_set_modified_callback(list, vaapi_device_modified);
 
-	list = obs_properties_add_list(props, "level", obs_module_text("Level"),
-				       OBS_COMBO_TYPE_LIST,
+	list = obs_properties_add_list(props, "level", obs_module_text("Level"), OBS_COMBO_TYPE_LIST,
 				       OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(list, "Auto", FF_LEVEL_UNKNOWN);
 	obs_property_list_add_int(list, "3.0", 30);
 	obs_property_list_add_int(list, "3.1", 31);
-	obs_property_list_add_int(list, "4.0 (default) (Compatibility mode)",
-				  40);
+	obs_property_list_add_int(list, "4.0 (default) (Compatibility mode)", 40);
 	obs_property_list_add_int(list, "4.1", 41);
 	obs_property_list_add_int(list, "4.2", 42);
 	obs_property_list_add_int(list, "5.0", 50);
 	obs_property_list_add_int(list, "5.1", 51);
 	obs_property_list_add_int(list, "5.2", 52);
 
-	list = obs_properties_add_list(props, "rate_control",
-				       obs_module_text("RateControl"),
-				       OBS_COMBO_TYPE_LIST,
+	list = obs_properties_add_list(props, "rate_control", obs_module_text("RateControl"), OBS_COMBO_TYPE_LIST,
 				       OBS_COMBO_FORMAT_STRING);
 
 	obs_property_set_modified_callback(list, rate_control_modified);
 
 	obs_property_t *p;
-	p = obs_properties_add_int(props, "bitrate", obs_module_text("Bitrate"),
-				   0, 300000, 50);
+	p = obs_properties_add_int(props, "bitrate", obs_module_text("Bitrate"), 0, 300000, 50);
 	obs_property_int_set_suffix(p, " Kbps");
 
-	p = obs_properties_add_int(
-		props, "maxrate", obs_module_text("MaxBitrate"), 0, 300000, 50);
+	p = obs_properties_add_int(props, "maxrate", obs_module_text("MaxBitrate"), 0, 300000, 50);
 	obs_property_int_set_suffix(p, " Kbps");
 
 	obs_properties_add_int(props, "qp", "QP", 0, 51, 1);
 
-	p = obs_properties_add_int(props, "keyint_sec",
-				   obs_module_text("KeyframeIntervalSec"), 0,
-				   20, 1);
+	p = obs_properties_add_int(props, "keyint_sec", obs_module_text("KeyframeIntervalSec"), 0, 20, 1);
 	obs_property_int_set_suffix(p, " s");
 
-	obs_properties_add_int(props, "bf", obs_module_text("BFrames"), 0, 4,
-			       1);
+	obs_properties_add_int(props, "bf", obs_module_text("BFrames"), 0, 4, 1);
 
-	obs_properties_add_text(props, "ffmpeg_opts",
-				obs_module_text("FFmpegOpts"),
-				OBS_TEXT_DEFAULT);
+	obs_properties_add_text(props, "ffmpeg_opts", obs_module_text("FFmpegOpts"), OBS_TEXT_DEFAULT);
 
 	return props;
 }

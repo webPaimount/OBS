@@ -12,8 +12,7 @@ class SliderIgnoreScroll : public QSlider {
 
 public:
 	SliderIgnoreScroll(QWidget *parent = nullptr);
-	SliderIgnoreScroll(Qt::Orientation orientation,
-			   QWidget *parent = nullptr);
+	SliderIgnoreScroll(Qt::Orientation orientation, QWidget *parent = nullptr);
 
 protected:
 	virtual void wheelEvent(QWheelEvent *event) override;
@@ -26,8 +25,7 @@ public:
 	obs_fader_t *fad;
 
 	VolumeSlider(obs_fader_t *fader, QWidget *parent = nullptr);
-	VolumeSlider(obs_fader_t *fader, Qt::Orientation orientation,
-		     QWidget *parent = nullptr);
+	VolumeSlider(obs_fader_t *fader, Qt::Orientation orientation, QWidget *parent = nullptr);
 };
 
 class VolumeAccessibleInterface : public QAccessibleWidget {
@@ -53,8 +51,7 @@ protected:
 
 class SliderIgnoreClick : public SliderIgnoreScroll {
 public:
-	inline SliderIgnoreClick(Qt::Orientation orientation,
-				 QWidget *parent = nullptr)
+	inline SliderIgnoreClick(Qt::Orientation orientation, QWidget *parent = nullptr)
 		: SliderIgnoreScroll(orientation, parent)
 	{
 	}

@@ -81,8 +81,7 @@ void d3d11_free(void)
 		for (size_t i = 0; i < NUM_BUFFERS; i++) {
 			if (data.copy_surfaces[i]) {
 				if (data.texture_mapped[i])
-					data.context->Unmap(
-						data.copy_surfaces[i], 0);
+					data.context->Unmap(data.copy_surfaces[i], 0);
 				data.copy_surfaces[i]->Release();
 			}
 		}
@@ -109,16 +108,14 @@ static bool create_d3d11_stage_surface(ID3D11Texture2D **tex)
 
 	hr = data.device->CreateTexture2D(&desc, nullptr, tex);
 	if (FAILED(hr)) {
-		hlog_hr("create_d3d11_stage_surface: failed to create texture",
-			hr);
+		hlog_hr("create_d3d11_stage_surface: failed to create texture", hr);
 		return false;
 	}
 
 	return true;
 }
 
-static bool create_d3d11_tex(uint32_t cx, uint32_t cy, ID3D11Texture2D **tex,
-			     HANDLE *handle)
+static bool create_d3d11_tex(uint32_t cx, uint32_t cy, ID3D11Texture2D **tex, HANDLE *handle)
 {
 	HRESULT hr;
 
@@ -127,8 +124,7 @@ static bool create_d3d11_tex(uint32_t cx, uint32_t cy, ID3D11Texture2D **tex,
 	desc.Height = cy;
 	desc.MipLevels = 1;
 	desc.ArraySize = 1;
-	desc.Format = apply_dxgi_format_typeless(
-		data.format, global_hook_info->allow_srgb_alias);
+	desc.Format = apply_dxgi_format_typeless(data.format, global_hook_info->allow_srgb_alias);
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	desc.SampleDesc.Count = 1;
 	desc.Usage = D3D11_USAGE_DEFAULT;
@@ -142,8 +138,7 @@ static bool create_d3d11_tex(uint32_t cx, uint32_t cy, ID3D11Texture2D **tex,
 
 	if (!!handle) {
 		IDXGIResource *dxgi_res;
-		hr = (*tex)->QueryInterface(__uuidof(IDXGIResource),
-					    (void **)&dxgi_res);
+		hr = (*tex)->QueryInterface(__uuidof(IDXGIResource), (void **)&dxgi_res);
 		if (FAILED(hr)) {
 			hlog_hr("create_d3d11_tex: failed to query "
 				"IDXGIResource interface from texture",
@@ -154,8 +149,7 @@ static bool create_d3d11_tex(uint32_t cx, uint32_t cy, ID3D11Texture2D **tex,
 		hr = dxgi_res->GetSharedHandle(handle);
 		dxgi_res->Release();
 		if (FAILED(hr)) {
-			hlog_hr("create_d3d11_tex: failed to get shared handle",
-				hr);
+			hlog_hr("create_d3d11_tex: failed to get shared handle", hr);
 			return false;
 		}
 	}
@@ -199,8 +193,7 @@ static bool d3d11_shmem_init_buffers(size_t idx)
 		D3D11_MAPPED_SUBRESOURCE map = {};
 		HRESULT hr;
 
-		hr = data.context->Map(data.copy_surfaces[idx], 0,
-				       D3D11_MAP_READ, 0, &map);
+		hr = data.context->Map(data.copy_surfaces[idx], 0, D3D11_MAP_READ, 0, &map);
 		if (FAILED(hr)) {
 			hlog_hr("d3d11_shmem_init_buffers: failed to get "
 				"pitch",
@@ -224,8 +217,7 @@ static bool d3d11_shmem_init(HWND window)
 			return false;
 		}
 	}
-	if (!capture_init_shmem(&data.shmem_info, window, data.cx, data.cy,
-				data.pitch, data.format, false)) {
+	if (!capture_init_shmem(&data.shmem_info, window, data.cx, data.cy, data.pitch, data.format, false)) {
 		return false;
 	}
 
@@ -239,15 +231,14 @@ static bool d3d11_shtex_init(HWND window)
 
 	data.using_shtex = true;
 
-	success =
-		create_d3d11_tex(data.cx, data.cy, &data.texture, &data.handle);
+	success = create_d3d11_tex(data.cx, data.cy, &data.texture, &data.handle);
 
 	if (!success) {
 		hlog("d3d11_shtex_init: failed to create texture");
 		return false;
 	}
-	if (!capture_init_shtex(&data.shtex_info, window, data.cx, data.cy,
-				data.format, false, (uintptr_t)data.handle)) {
+	if (!capture_init_shtex(&data.shtex_info, window, data.cx, data.cy, data.format, false,
+				(uintptr_t)data.handle)) {
 		return false;
 	}
 
@@ -275,9 +266,7 @@ static void d3d11_init(IDXGISwapChain *swap)
 		return;
 	}
 
-	const bool success = global_hook_info->force_shmem
-				     ? d3d11_shmem_init(window)
-				     : d3d11_shtex_init(window);
+	const bool success = global_hook_info->force_shmem ? d3d11_shmem_init(window) : d3d11_shtex_init(window);
 	if (!success)
 		d3d11_free();
 }
@@ -304,8 +293,7 @@ static void d3d11_shmem_capture_copy(int i)
 	if (data.texture_ready[i]) {
 		data.texture_ready[i] = false;
 
-		hr = data.context->Map(data.copy_surfaces[i], 0, D3D11_MAP_READ,
-				       0, &map);
+		hr = data.context->Map(data.copy_surfaces[i], 0, D3D11_MAP_READ, 0, &map);
 		if (SUCCEEDED(hr)) {
 			data.texture_mapped[i] = true;
 			shmem_copy_data(i, map.pData);
@@ -324,14 +312,12 @@ static inline void d3d11_shmem_capture(ID3D11Resource *backbuffer)
 		data.copy_wait++;
 	} else {
 		if (shmem_texture_data_lock(data.cur_tex)) {
-			data.context->Unmap(data.copy_surfaces[data.cur_tex],
-					    0);
+			data.context->Unmap(data.copy_surfaces[data.cur_tex], 0);
 			data.texture_mapped[data.cur_tex] = false;
 			shmem_texture_data_unlock(data.cur_tex);
 		}
 
-		d3d11_copy_texture(data.copy_surfaces[data.cur_tex],
-				   backbuffer);
+		d3d11_copy_texture(data.copy_surfaces[data.cur_tex], backbuffer);
 		data.texture_ready[data.cur_tex] = true;
 	}
 
@@ -353,8 +339,7 @@ void d3d11_capture(void *swap_ptr, void *backbuffer_ptr)
 	if (capture_ready()) {
 		ID3D11Resource *backbuffer;
 
-		hr = dxgi_backbuffer->QueryInterface(__uuidof(ID3D11Resource),
-						     (void **)&backbuffer);
+		hr = dxgi_backbuffer->QueryInterface(__uuidof(ID3D11Resource), (void **)&backbuffer);
 		if (FAILED(hr)) {
 			hlog_hr("d3d11_shtex_capture: failed to get "
 				"backbuffer",

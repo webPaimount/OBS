@@ -4,8 +4,7 @@
 
 class OBSProxyStyle : public QProxyStyle {
 public:
-	int styleHint(StyleHint hint, const QStyleOption *option,
-		      const QWidget *widget,
+	int styleHint(StyleHint hint, const QStyleOption *option, const QWidget *widget,
 		      QStyleHintReturn *returnData) const override;
 };
 

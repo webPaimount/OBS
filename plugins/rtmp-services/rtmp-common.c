@@ -34,16 +34,14 @@ static const char *rtmp_common_getname(void *unused)
 }
 
 static json_t *open_services_file(void);
-static inline json_t *find_service(json_t *root, const char *name,
-				   const char **p_new_name);
+static inline json_t *find_service(json_t *root, const char *name, const char **p_new_name);
 static inline bool get_bool_val(json_t *service, const char *key);
 static inline const char *get_string_val(json_t *service, const char *key);
 static inline int get_int_val(json_t *service, const char *key);
 
 extern void twitch_ingests_refresh(int seconds);
 
-static void ensure_valid_url(struct rtmp_common *service, json_t *json,
-			     obs_data_t *settings)
+static void ensure_valid_url(struct rtmp_common *service, json_t *json, obs_data_t *settings)
 {
 	json_t *servers = json_object_get(json, "servers");
 	const char *top_url = NULL;
@@ -168,11 +166,9 @@ static void rtmp_common_update(void *data, obs_data_t *settings)
 			service->service = bstrdup(new_name);
 		}
 
-		if ((service->protocol == NULL ||
-		     service->protocol[0] == '\0')) {
+		if ((service->protocol == NULL || service->protocol[0] == '\0')) {
 			bfree(service->protocol);
-			service->protocol =
-				bstrdup(get_protocol(serv, settings));
+			service->protocol = bstrdup(get_protocol(serv, settings));
 		}
 
 		if (serv) {
@@ -181,8 +177,8 @@ static void rtmp_common_update(void *data, obs_data_t *settings)
 				update_recommendations(service, rec);
 			}
 
-			service->supports_additional_audio_track = get_bool_val(
-				serv, "supports_additional_audio_track");
+			service->supports_additional_audio_track =
+				get_bool_val(serv, "supports_additional_audio_track");
 			ensure_valid_url(service, serv, settings);
 		}
 	}
@@ -267,8 +263,7 @@ static bool is_protocol_available(json_t *service)
 	return ret;
 }
 
-static void add_service(obs_property_t *list, json_t *service, bool show_all,
-			const char *cur_service)
+static void add_service(obs_property_t *list, json_t *service, bool show_all, const char *cur_service)
 {
 	json_t *servers;
 	const char *name;
@@ -304,8 +299,7 @@ static void add_service(obs_property_t *list, json_t *service, bool show_all,
 	obs_property_list_add_string(list, name, name);
 }
 
-static void add_services(obs_property_t *list, json_t *root, bool show_all,
-			 const char *cur_service)
+static void add_services(obs_property_t *list, json_t *root, bool show_all, const char *cur_service)
 {
 	json_t *service;
 	size_t index;
@@ -325,8 +319,7 @@ static void add_services(obs_property_t *list, json_t *root, bool show_all,
 
 	service = find_service(root, cur_service, NULL);
 	if (!service && cur_service && *cur_service) {
-		obs_property_list_insert_string(list, 0, cur_service,
-						cur_service);
+		obs_property_list_insert_string(list, 0, cur_service, cur_service);
 		obs_property_list_item_disable(list, 0, true);
 	}
 }
@@ -400,8 +393,7 @@ static json_t *open_services_file(void)
 	return root;
 }
 
-static void build_service_list(obs_property_t *list, json_t *root,
-			       bool show_all, const char *cur_service)
+static void build_service_list(obs_property_t *list, json_t *root, bool show_all, const char *cur_service)
 {
 	obs_property_list_clear(list);
 	add_services(list, root, show_all, cur_service);
@@ -418,8 +410,7 @@ static bool fill_twitch_servers_locked(obs_property_t *servers_prop)
 {
 	size_t count = twitch_ingest_count();
 
-	obs_property_list_add_string(servers_prop,
-				     obs_module_text("Server.Auto"), "auto");
+	obs_property_list_add_string(servers_prop, obs_module_text("Server.Auto"), "auto");
 
 	if (count <= 1)
 		return false;
@@ -443,8 +434,7 @@ static inline bool fill_twitch_servers(obs_property_t *servers_prop)
 	return success;
 }
 
-static void fill_servers(obs_property_t *servers_prop, json_t *service,
-			 const char *name)
+static void fill_servers(obs_property_t *servers_prop, json_t *service, const char *name)
 {
 	json_t *servers, *server;
 	size_t index;
@@ -469,8 +459,7 @@ static void fill_servers(obs_property_t *servers_prop, json_t *service,
 
 	/* Assumption:  Nimo TV should be RTMP only, so no RTMPS check in the ingest */
 	if (strcmp(name, "Nimo TV") == 0) {
-		obs_property_list_add_string(
-			servers_prop, obs_module_text("Server.Auto"), "auto");
+		obs_property_list_add_string(servers_prop, obs_module_text("Server.Auto"), "auto");
 	}
 
 	json_array_foreach (servers, index, server) {
@@ -481,8 +470,7 @@ static void fill_servers(obs_property_t *servers_prop, json_t *service,
 			continue;
 
 		/* Skip RTMPS server if protocol not registered */
-		if ((!obs_is_output_protocol_registered("RTMPS")) &&
-		    (strncmp(url, "rtmps://", 8) == 0))
+		if ((!obs_is_output_protocol_registered("RTMPS")) && (strncmp(url, "rtmps://", 8) == 0))
 			continue;
 
 		obs_property_list_add_string(servers_prop, server_name, url);
@@ -504,8 +492,7 @@ static void fill_stream_key_link(json_t *service, obs_data_t *settings)
 
 	stream_key_link = get_string_val(service, "stream_key_link");
 	if (stream_key_link)
-		obs_data_set_string(settings, "stream_key_link",
-				    stream_key_link);
+		obs_data_set_string(settings, "stream_key_link", stream_key_link);
 }
 
 static void update_protocol(json_t *service, obs_data_t *settings)
@@ -531,8 +518,7 @@ static void update_protocol(json_t *service, obs_data_t *settings)
 	obs_data_set_string(settings, "protocol", "RTMP");
 }
 
-static inline json_t *find_service(json_t *root, const char *name,
-				   const char **p_new_name)
+static inline json_t *find_service(json_t *root, const char *name, const char **p_new_name)
 {
 	size_t index;
 	json_t *service;
@@ -568,8 +554,7 @@ static inline json_t *find_service(json_t *root, const char *name,
 	return NULL;
 }
 
-static bool service_selected(obs_properties_t *props, obs_property_t *p,
-			     obs_data_t *settings)
+static bool service_selected(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	const char *name = obs_data_get_string(settings, "service");
 	json_t *root = obs_properties_get_param(props);
@@ -603,8 +588,7 @@ static bool service_selected(obs_properties_t *props, obs_property_t *p,
 	return true;
 }
 
-static bool show_all_services_toggled(obs_properties_t *ppts, obs_property_t *p,
-				      obs_data_t *settings)
+static bool show_all_services_toggled(obs_properties_t *ppts, obs_property_t *p, obs_data_t *settings)
 {
 	const char *cur_service = obs_data_get_string(settings, "service");
 	bool show_all = obs_data_get_bool(settings, "show_all");
@@ -613,8 +597,7 @@ static bool show_all_services_toggled(obs_properties_t *ppts, obs_property_t *p,
 	if (!root)
 		return false;
 
-	build_service_list(obs_properties_get(ppts, "service"), root, show_all,
-			   cur_service);
+	build_service_list(obs_properties_get(ppts, "service"), root, show_all, cur_service);
 
 	UNUSED_PARAMETER(p);
 	return true;
@@ -632,29 +615,25 @@ static obs_properties_t *rtmp_common_properties(void *unused)
 	if (root)
 		obs_properties_set_param(ppts, root, properties_data_destroy);
 
-	p = obs_properties_add_list(ppts, "service", obs_module_text("Service"),
-				    OBS_COMBO_TYPE_LIST,
+	p = obs_properties_add_list(ppts, "service", obs_module_text("Service"), OBS_COMBO_TYPE_LIST,
 				    OBS_COMBO_FORMAT_STRING);
 
 	obs_property_set_modified_callback(p, service_selected);
 
-	p = obs_properties_add_bool(ppts, "show_all",
-				    obs_module_text("ShowAll"));
+	p = obs_properties_add_bool(ppts, "show_all", obs_module_text("ShowAll"));
 
 	obs_property_set_modified_callback(p, show_all_services_toggled);
 
-	obs_properties_add_list(ppts, "server", obs_module_text("Server"),
-				OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_properties_add_list(ppts, "server", obs_module_text("Server"), OBS_COMBO_TYPE_LIST,
+				OBS_COMBO_FORMAT_STRING);
 
-	obs_properties_add_text(ppts, "key", obs_module_text("StreamKey"),
-				OBS_TEXT_PASSWORD);
+	obs_properties_add_text(ppts, "key", obs_module_text("StreamKey"), OBS_TEXT_PASSWORD);
 	return ppts;
 }
 
 static int get_bitrate_matrix_max(json_t *array);
 
-static void apply_video_encoder_settings(obs_data_t *settings,
-					 json_t *recommended)
+static void apply_video_encoder_settings(obs_data_t *settings, json_t *recommended)
 {
 	json_t *item = json_object_get(recommended, "keyint");
 	if (json_is_integer(item)) {
@@ -666,8 +645,7 @@ static void apply_video_encoder_settings(obs_data_t *settings,
 
 	item = json_object_get(recommended, "profile");
 	obs_data_item_t *enc_item = obs_data_item_byname(settings, "profile");
-	if (json_is_string(item) &&
-	    obs_data_item_gettype(enc_item) == OBS_DATA_STRING) {
+	if (json_is_string(item) && obs_data_item_gettype(enc_item) == OBS_DATA_STRING) {
 		const char *profile = json_string_value(item);
 		obs_data_set_string(settings, "profile", profile);
 	}
@@ -685,8 +663,7 @@ static void apply_video_encoder_settings(obs_data_t *settings,
 		max_bitrate = (int)json_integer_value(item);
 	}
 
-	if (max_bitrate &&
-	    obs_data_get_int(settings, "bitrate") > max_bitrate) {
+	if (max_bitrate && obs_data_get_int(settings, "bitrate") > max_bitrate) {
 		obs_data_set_int(settings, "bitrate", max_bitrate);
 		obs_data_set_int(settings, "buffer_size", max_bitrate);
 	}
@@ -700,8 +677,7 @@ static void apply_video_encoder_settings(obs_data_t *settings,
 	item = json_object_get(recommended, "x264opts");
 	if (json_is_string(item)) {
 		const char *x264_settings = json_string_value(item);
-		const char *cur_settings =
-			obs_data_get_string(settings, "x264opts");
+		const char *cur_settings = obs_data_get_string(settings, "x264opts");
 		struct dstr opts;
 
 		dstr_init_copy(&opts, cur_settings);
@@ -714,8 +690,7 @@ static void apply_video_encoder_settings(obs_data_t *settings,
 	}
 }
 
-static void apply_audio_encoder_settings(obs_data_t *settings,
-					 json_t *recommended)
+static void apply_audio_encoder_settings(obs_data_t *settings, json_t *recommended)
 {
 	json_t *item = json_object_get(recommended, "max audio bitrate");
 	if (json_is_integer(item)) {
@@ -725,8 +700,7 @@ static void apply_audio_encoder_settings(obs_data_t *settings,
 	}
 }
 
-static void initialize_output(struct rtmp_common *service, json_t *root,
-			      obs_data_t *video_settings,
+static void initialize_output(struct rtmp_common *service, json_t *root, obs_data_t *video_settings,
 			      obs_data_t *audio_settings)
 {
 	json_t *json_service = find_service(root, service->service, NULL);
@@ -751,15 +725,13 @@ static void initialize_output(struct rtmp_common *service, json_t *root,
 		apply_audio_encoder_settings(audio_settings, recommended);
 }
 
-static void rtmp_common_apply_settings(void *data, obs_data_t *video_settings,
-				       obs_data_t *audio_settings)
+static void rtmp_common_apply_settings(void *data, obs_data_t *video_settings, obs_data_t *audio_settings)
 {
 	struct rtmp_common *service = data;
 	json_t *root = open_services_file();
 
 	if (root) {
-		initialize_output(service, root, video_settings,
-				  audio_settings);
+		initialize_output(service, root, video_settings, audio_settings);
 		json_decref(root);
 	}
 }
@@ -797,8 +769,7 @@ static const char *rtmp_common_url(void *data)
 	if (service->service && strcmp(service->service, "SHOWROOM") == 0) {
 		if (service->server && service->key) {
 			struct showroom_ingest *ingest;
-			ingest = showroom_get_ingest(service->server,
-						     service->key);
+			ingest = showroom_get_ingest(service->server, service->key);
 			return ingest->url;
 		}
 	}
@@ -821,8 +792,7 @@ static const char *rtmp_common_key(void *data)
 	if (service->service && strcmp(service->service, "SHOWROOM") == 0) {
 		if (service->server && service->key) {
 			struct showroom_ingest *ingest;
-			ingest = showroom_get_ingest(service->server,
-						     service->key);
+			ingest = showroom_get_ingest(service->server, service->key);
 			return ingest->key;
 		}
 	}
@@ -837,16 +807,14 @@ static const char *rtmp_common_key(void *data)
 	return service->key;
 }
 
-static void rtmp_common_get_supported_resolutions(
-	void *data, struct obs_service_resolution **resolutions, size_t *count)
+static void rtmp_common_get_supported_resolutions(void *data, struct obs_service_resolution **resolutions,
+						  size_t *count)
 {
 	struct rtmp_common *service = data;
 
 	if (service->supported_resolutions_count) {
 		*count = service->supported_resolutions_count;
-		*resolutions =
-			bmemdup(service->supported_resolutions,
-				*count * sizeof(struct obs_service_resolution));
+		*resolutions = bmemdup(service->supported_resolutions, *count * sizeof(struct obs_service_resolution));
 	} else {
 		*count = 0;
 		*resolutions = NULL;
@@ -886,16 +854,14 @@ static int get_bitrate_matrix_max(json_t *array)
 		if (c != 2)
 			continue;
 
-		if ((int)ovi.output_width == cx &&
-		    (int)ovi.output_height == cy && cur_fps <= fps)
+		if ((int)ovi.output_width == cx && (int)ovi.output_height == cy && cur_fps <= fps)
 			return bitrate;
 	}
 
 	return 0;
 }
 
-static void rtmp_common_get_max_bitrate(void *data, int *video_bitrate,
-					int *audio_bitrate)
+static void rtmp_common_get_max_bitrate(void *data, int *video_bitrate, int *audio_bitrate)
 {
 	struct rtmp_common *service = data;
 	json_t *root = open_services_file();
@@ -927,8 +893,7 @@ static void rtmp_common_get_max_bitrate(void *data, int *video_bitrate,
 			bitrate = get_bitrate_matrix_max(item);
 		}
 		if (!bitrate) {
-			item = json_object_get(recommended,
-					       "max video bitrate");
+			item = json_object_get(recommended, "max video bitrate");
 			if (json_is_integer(item))
 				bitrate = (int)json_integer_value(item);
 		}
@@ -957,8 +922,7 @@ static const char **rtmp_common_get_supported_video_codecs(void *data)
 		goto fail;
 	}
 
-	json_t *json_video_codecs =
-		json_object_get(json_service, "supported video codecs");
+	json_t *json_video_codecs = json_object_get(json_service, "supported video codecs");
 	if (!json_is_array(json_video_codecs)) {
 		goto fail;
 	}
@@ -1000,8 +964,7 @@ static const char **rtmp_common_get_supported_audio_codecs(void *data)
 		goto fail;
 	}
 
-	json_t *json_audio_codecs =
-		json_object_get(json_service, "supported audio codecs");
+	json_t *json_audio_codecs = json_object_get(json_service, "supported audio codecs");
 	if (!json_is_array(json_audio_codecs)) {
 		goto fail;
 	}
@@ -1097,8 +1060,7 @@ static bool rtmp_common_can_try_to_connect(void *data)
 
 	const char *url = rtmp_common_url(data);
 
-	return (url != NULL && url[0] != '\0') &&
-	       (key != NULL && key[0] != '\0');
+	return (url != NULL && url[0] != '\0') && (key != NULL && key[0] != '\0');
 }
 
 struct obs_service_info rtmp_common_service = {

@@ -114,8 +114,7 @@ private slots:
 	void CopyFilter();
 	void PasteFilter();
 
-	void FiltersMoved(const QModelIndex &srcParent, int srcIdxStart,
-			  int srcIdxEnd, const QModelIndex &dstParent,
+	void FiltersMoved(const QModelIndex &srcParent, int srcIdxStart, int srcIdxEnd, const QModelIndex &dstParent,
 			  int dstIdx);
 
 public:
@@ -132,6 +131,5 @@ public:
 
 protected:
 	virtual void closeEvent(QCloseEvent *event) override;
-	virtual bool nativeEvent(const QByteArray &eventType, void *message,
-				 qintptr *result) override;
+	virtual bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) override;
 };

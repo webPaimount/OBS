@@ -130,8 +130,7 @@ public:
 	explicit SourceTreeModel(SourceTree *st);
 
 	virtual int rowCount(const QModelIndex &parent) const override;
-	virtual QVariant data(const QModelIndex &index,
-			      int role) const override;
+	virtual QVariant data(const QModelIndex &index, int role) const override;
 
 	virtual Qt::ItemFlags flags(const QModelIndex &index) const override;
 	virtual Qt::DropActions supportedDropActions() const override;
@@ -159,10 +158,7 @@ class SourceTree : public QListView {
 	void UpdateWidget(const QModelIndex &idx, obs_sceneitem_t *item);
 	void UpdateWidgets(bool force = false);
 
-	inline SourceTreeModel *GetStm() const
-	{
-		return reinterpret_cast<SourceTreeModel *>(model());
-	}
+	inline SourceTreeModel *GetStm() const { return reinterpret_cast<SourceTreeModel *>(model()); }
 
 public:
 	inline SourceTreeItem *GetItemWidget(int idx)
@@ -204,9 +200,7 @@ protected:
 	virtual void dropEvent(QDropEvent *event) override;
 	virtual void paintEvent(QPaintEvent *event) override;
 
-	virtual void
-	selectionChanged(const QItemSelection &selected,
-			 const QItemSelection &deselected) override;
+	virtual void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;
 };
 
 class SourceTreeDelegate : public QStyledItemDelegate {
@@ -214,6 +208,5 @@ class SourceTreeDelegate : public QStyledItemDelegate {
 
 public:
 	SourceTreeDelegate(QObject *parent);
-	virtual QSize sizeHint(const QStyleOptionViewItem &option,
-			       const QModelIndex &index) const override;
+	virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 };

@@ -4,9 +4,8 @@
 #include <util/dstr.h>
 #include <sys/stat.h>
 
-#define blog(log_level, format, ...)                    \
-	blog(log_level, "[image_source: '%s'] " format, \
-	     obs_source_get_name(context->source), ##__VA_ARGS__)
+#define blog(log_level, format, ...) \
+	blog(log_level, "[image_source: '%s'] " format, obs_source_get_name(context->source), ##__VA_ARGS__)
 
 #define debug(format, ...) blog(LOG_DEBUG, format, ##__VA_ARGS__)
 #define info(format, ...) blog(LOG_INFO, format, ##__VA_ARGS__)
@@ -53,9 +52,8 @@ static void image_source_load(struct image_source *context)
 		debug("loading texture '%s'", file);
 		context->file_timestamp = get_modified_timestamp(file);
 		gs_image_file4_init(&context->if4, file,
-				    context->linear_alpha
-					    ? GS_IMAGE_ALPHA_PREMULTIPLY_SRGB
-					    : GS_IMAGE_ALPHA_PREMULTIPLY);
+				    context->linear_alpha ? GS_IMAGE_ALPHA_PREMULTIPLY_SRGB
+							  : GS_IMAGE_ALPHA_PREMULTIPLY);
 		context->update_time_elapsed = 0;
 
 		obs_enter_graphics();
@@ -233,8 +231,7 @@ static void image_source_tick(void *data, float seconds)
 		return;
 	}
 
-	if (context->last_time &&
-	    context->if4.image3.image2.image.is_animated_gif) {
+	if (context->last_time && context->if4.image3.image2.image.is_animated_gif) {
 		uint64_t elapsed = frame_time - context->last_time;
 		bool updated = gs_image_file4_tick(&context->if4, elapsed);
 
@@ -283,12 +280,9 @@ static obs_properties_t *image_source_properties(void *data)
 			dstr_resize(&path, slash - path.array + 1);
 	}
 
-	obs_properties_add_path(props, "file", obs_module_text("File"),
-				OBS_PATH_FILE, image_filter, path.array);
-	obs_properties_add_bool(props, "unload",
-				obs_module_text("UnloadWhenNotShowing"));
-	obs_properties_add_bool(props, "linear_alpha",
-				obs_module_text("LinearAlpha"));
+	obs_properties_add_path(props, "file", obs_module_text("File"), OBS_PATH_FILE, image_filter, path.array);
+	obs_properties_add_bool(props, "unload", obs_module_text("UnloadWhenNotShowing"));
+	obs_properties_add_bool(props, "linear_alpha", obs_module_text("LinearAlpha"));
 	dstr_free(&path);
 
 	return props;
@@ -320,9 +314,8 @@ static obs_missing_files_t *image_source_missingfiles(void *data)
 
 	if (strcmp(s->file, "") != 0) {
 		if (!os_file_exists(s->file)) {
-			obs_missing_file_t *file = obs_missing_file_create(
-				s->file, missing_file_callback,
-				OBS_MISSING_FILE_SOURCE, s->source, NULL);
+			obs_missing_file_t *file = obs_missing_file_create(s->file, missing_file_callback,
+									   OBS_MISSING_FILE_SOURCE, s->source, NULL);
 
 			obs_missing_files_add_file(files, file);
 		}
@@ -331,9 +324,8 @@ static obs_missing_files_t *image_source_missingfiles(void *data)
 	return files;
 }
 
-static enum gs_color_space
-image_source_get_color_space(void *data, size_t count,
-			     const enum gs_color_space *preferred_spaces)
+static enum gs_color_space image_source_get_color_space(void *data, size_t count,
+							const enum gs_color_space *preferred_spaces)
 {
 	UNUSED_PARAMETER(count);
 	UNUSED_PARAMETER(preferred_spaces);

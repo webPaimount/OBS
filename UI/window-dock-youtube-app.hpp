@@ -40,11 +40,9 @@ private:
 	void CreateBrowserWidget(const std::string &url);
 	virtual void showEvent(QShowEvent *event) override;
 	virtual void closeEvent(QCloseEvent *event) override;
-	void DispatchYTEvent(const char *event, const char *video_id,
-			     streaming_mode_t mode);
+	void DispatchYTEvent(const char *event, const char *video_id, streaming_mode_t mode);
 	void UpdateChannelId();
-	void SetInitEvent(streaming_mode_t mode, const char *event = nullptr,
-			  const char *video_id = nullptr,
+	void SetInitEvent(streaming_mode_t mode, const char *event = nullptr, const char *video_id = nullptr,
 			  const char *channelId = nullptr);
 
 	QString channelId;

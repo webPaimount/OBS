@@ -69,16 +69,13 @@ struct BasicOutputHandler {
 
 	inline bool Active() const
 	{
-		return streamingActive || recordingActive || delayActive ||
-		       replayBufferActive || virtualCamActive;
+		return streamingActive || recordingActive || delayActive || replayBufferActive || virtualCamActive;
 	}
 
 protected:
 	void SetupAutoRemux(const char *&container);
-	std::string GetRecordingFilename(const char *path,
-					 const char *container, bool noSpace,
-					 bool overwrite, const char *format,
-					 bool ffmpeg);
+	std::string GetRecordingFilename(const char *path, const char *container, bool noSpace, bool overwrite,
+					 const char *format, bool ffmpeg);
 };
 
 BasicOutputHandler *CreateSimpleOutputHandler(OBSBasic *main);

@@ -64,9 +64,7 @@ static QWidget *getNextWidget(QBoxLayout *container, QLayoutItem *item)
 	return nullptr;
 }
 
-ControlsSplitButton::ControlsSplitButton(const QString &text,
-					 const QVariant &themeID,
-					 void (OBSBasic::*clicked)())
+ControlsSplitButton::ControlsSplitButton(const QString &text, const QVariant &themeID, void (OBSBasic::*clicked)())
 	: QHBoxLayout()
 {
 	button.reset(new QPushButton(text));
@@ -82,8 +80,7 @@ ControlsSplitButton::ControlsSplitButton(const QString &text,
 	addWidget(button.data());
 }
 
-void ControlsSplitButton::addIcon(const QString &name, const QVariant &themeID,
-				  void (OBSBasic::*clicked)())
+void ControlsSplitButton::addIcon(const QString &name, const QVariant &themeID, void (OBSBasic::*clicked)())
 {
 	icon.reset(new QPushButton());
 	icon->setAccessibleName(name);
@@ -137,8 +134,7 @@ void ControlsSplitButton::insert(int index)
 	}
 
 	if (index < count) {
-		auto next = firstWidget(
-			main->ui->buttonsVLayout->itemAt(index + 1));
+		auto next = firstWidget(main->ui->buttonsVLayout->itemAt(index + 1));
 		if (next)
 			QWidget::setTabOrder(prev, next);
 	}

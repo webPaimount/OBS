@@ -32,10 +32,9 @@ private slots:
 };
 #endif
 
-inline const std::vector<Auth::Def> youtubeServices = {
-	{"YouTube - RTMP", Auth::Type::OAuth_LinkedAccount, true, true},
-	{"YouTube - RTMPS", Auth::Type::OAuth_LinkedAccount, true, true},
-	{"YouTube - HLS", Auth::Type::OAuth_LinkedAccount, true, true}};
+inline const std::vector<Auth::Def> youtubeServices = {{"YouTube - RTMP", Auth::Type::OAuth_LinkedAccount, true, true},
+						       {"YouTube - RTMPS", Auth::Type::OAuth_LinkedAccount, true, true},
+						       {"YouTube - HLS", Auth::Type::OAuth_LinkedAccount, true, true}};
 
 class YoutubeAuth : public OAuthStreamKey {
 	Q_OBJECT
@@ -61,6 +60,5 @@ public:
 	void SetChatId(const QString &chat_id, const std::string &api_chat_id);
 	void ResetChat();
 
-	static std::shared_ptr<Auth> Login(QWidget *parent,
-					   const std::string &service);
+	static std::shared_ptr<Auth> Login(QWidget *parent, const std::string &service);
 };

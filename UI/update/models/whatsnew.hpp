@@ -24,22 +24,17 @@
 /* Ubuntu 22.04 be damned. */
 #ifndef NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT
 #define NLOHMANN_JSON_FROM_WITH_DEFAULT(v1) \
-	nlohmann_json_t.v1 =                \
-		nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1);
+	nlohmann_json_t.v1 = nlohmann_json_j.value(#v1, nlohmann_json_default_obj.v1);
 
-#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)              \
-	friend void to_json(nlohmann::json &nlohmann_json_j,                \
-			    const Type &nlohmann_json_t)                    \
-	{                                                                   \
-		NLOHMANN_JSON_EXPAND(                                       \
-			NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__)) \
-	}                                                                   \
-	friend void from_json(const nlohmann::json &nlohmann_json_j,        \
-			      Type &nlohmann_json_t)                        \
-	{                                                                   \
-		Type nlohmann_json_default_obj;                             \
-		NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(                   \
-			NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__))      \
+#define NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Type, ...)                                          \
+	friend void to_json(nlohmann::json &nlohmann_json_j, const Type &nlohmann_json_t)               \
+	{                                                                                               \
+		NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_TO, __VA_ARGS__))                \
+	}                                                                                               \
+	friend void from_json(const nlohmann::json &nlohmann_json_j, Type &nlohmann_json_t)             \
+	{                                                                                               \
+		Type nlohmann_json_default_obj;                                                         \
+		NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE(NLOHMANN_JSON_FROM_WITH_DEFAULT, __VA_ARGS__)) \
 	}
 
 #endif
@@ -51,8 +46,7 @@
 template<typename T> struct nlohmann::adl_serializer<std::optional<T>> {
 	static std::optional<T> from_json(const json &json)
 	{
-		return json.is_null() ? std::nullopt
-				      : std::optional{json.get<T>()};
+		return json.is_null() ? std::nullopt : std::optional{json.get<T>()};
 	}
 
 	static void to_json(json &json, std::optional<T> t)
@@ -69,8 +63,7 @@ struct WhatsNewPlatforms {
 	bool macos = false;
 	bool linux = false;
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WhatsNewPlatforms, windows,
-						    macos, linux)
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WhatsNewPlatforms, windows, macos, linux)
 };
 
 struct WhatsNewItem {
@@ -86,8 +79,7 @@ struct WhatsNewItem {
 	/* Optional OS filter */
 	std::optional<WhatsNewPlatforms> os = std::nullopt;
 
-	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WhatsNewItem, version, Beta,
-						    RC, url, increment, os)
+	NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(WhatsNewItem, version, Beta, RC, url, increment, os)
 };
 
 using WhatsNewList = std::vector<WhatsNewItem>;

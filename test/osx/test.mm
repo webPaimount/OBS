@@ -18,8 +18,9 @@ static const int cy = 600;
 
 template<typename T, typename D_T, D_T D> struct OBSUniqueHandle : std::unique_ptr<T, std::function<D_T>> {
     using base = std::unique_ptr<T, std::function<D_T>>;
-    explicit OBSUniqueHandle(T *obj = nullptr) : base(obj, D)
-    {}
+
+    explicit OBSUniqueHandle(T *obj = nullptr) : base(obj, D) {}
+
     operator T *()
     {
         return base::get();
@@ -109,6 +110,7 @@ static SceneContext SetupScene()
 @end
 
 @implementation OBSTest
+
 - (void)applicationDidFinishLaunching:(NSNotification *)notification
 {
     UNUSED_PARAMETER(notification);
@@ -169,6 +171,7 @@ static SceneContext SetupScene()
     obs_shutdown();
     NSLog(@"Number of memory leaks: %lu", bnum_allocs());
 }
+
 @end
 
 /* --------------------------------------------------- */

@@ -12,16 +12,13 @@ Q_DECLARE_METATYPE(OBSSource);
 OBSBasicAdvAudio::OBSBasicAdvAudio(QWidget *parent)
 	: QDialog(parent),
 	  ui(new Ui::OBSAdvAudio),
-	  sourceAddedSignal(obs_get_signal_handler(), "source_activate",
-			    OBSSourceAdded, this),
-	  sourceRemovedSignal(obs_get_signal_handler(), "source_deactivate",
-			      OBSSourceRemoved, this),
+	  sourceAddedSignal(obs_get_signal_handler(), "source_activate", OBSSourceAdded, this),
+	  sourceRemovedSignal(obs_get_signal_handler(), "source_deactivate", OBSSourceRemoved, this),
 	  showInactive(false)
 {
 	ui->setupUi(this);
 
-	VolumeType volType = (VolumeType)config_get_int(
-		GetGlobalConfig(), "BasicWindow", "AdvAudioVolumeType");
+	VolumeType volType = (VolumeType)config_get_int(GetGlobalConfig(), "BasicWindow", "AdvAudioVolumeType");
 
 	if (volType == VolumeType::Percent)
 		ui->usePercent->setChecked(true);
@@ -50,8 +47,7 @@ bool OBSBasicAdvAudio::EnumSources(void *param, obs_source_t *source)
 	OBSBasicAdvAudio *dialog = reinterpret_cast<OBSBasicAdvAudio *>(param);
 	uint32_t flags = obs_source_get_output_flags(source);
 
-	if ((flags & OBS_SOURCE_AUDIO) != 0 &&
-	    (dialog->showInactive || obs_source_active(source)))
+	if ((flags & OBS_SOURCE_AUDIO) != 0 && (dialog->showInactive || obs_source_active(source)))
 		dialog->AddAudioSource(source);
 
 	return true;
@@ -61,16 +57,15 @@ void OBSBasicAdvAudio::OBSSourceAdded(void *param, calldata_t *calldata)
 {
 	OBSSource source((obs_source_t *)calldata_ptr(calldata, "source"));
 
-	QMetaObject::invokeMethod(reinterpret_cast<OBSBasicAdvAudio *>(param),
-				  "SourceAdded", Q_ARG(OBSSource, source));
+	QMetaObject::invokeMethod(reinterpret_cast<OBSBasicAdvAudio *>(param), "SourceAdded", Q_ARG(OBSSource, source));
 }
 
 void OBSBasicAdvAudio::OBSSourceRemoved(void *param, calldata_t *calldata)
 {
 	OBSSource source((obs_source_t *)calldata_ptr(calldata, "source"));
 
-	QMetaObject::invokeMethod(reinterpret_cast<OBSBasicAdvAudio *>(param),
-				  "SourceRemoved", Q_ARG(OBSSource, source));
+	QMetaObject::invokeMethod(reinterpret_cast<OBSBasicAdvAudio *>(param), "SourceRemoved",
+				  Q_ARG(OBSSource, source));
 }
 
 inline void OBSBasicAdvAudio::AddAudioSource(obs_source_t *source)
@@ -126,8 +121,7 @@ void OBSBasicAdvAudio::on_usePercent_toggled(bool checked)
 	for (size_t i = 0; i < controls.size(); i++)
 		controls[i]->SetVolumeWidget(type);
 
-	config_set_int(GetGlobalConfig(), "BasicWindow", "AdvAudioVolumeType",
-		       (int)type);
+	config_set_int(GetGlobalConfig(), "BasicWindow", "AdvAudioVolumeType", (int)type);
 }
 
 void OBSBasicAdvAudio::on_activeOnly_toggled(bool checked)
@@ -146,23 +140,15 @@ void OBSBasicAdvAudio::SetShowInactive(bool show)
 	sourceRemovedSignal.Disconnect();
 
 	if (showInactive) {
-		sourceAddedSignal.Connect(obs_get_signal_handler(),
-					  "source_create", OBSSourceAdded,
-					  this);
-		sourceRemovedSignal.Connect(obs_get_signal_handler(),
-					    "source_remove", OBSSourceRemoved,
-					    this);
+		sourceAddedSignal.Connect(obs_get_signal_handler(), "source_create", OBSSourceAdded, this);
+		sourceRemovedSignal.Connect(obs_get_signal_handler(), "source_remove", OBSSourceRemoved, this);
 
 		obs_enum_sources(EnumSources, this);
 
 		SetIconsVisible(showVisible);
 	} else {
-		sourceAddedSignal.Connect(obs_get_signal_handler(),
-					  "source_activate", OBSSourceAdded,
-					  this);
-		sourceRemovedSignal.Connect(obs_get_signal_handler(),
-					    "source_deactivate",
-					    OBSSourceRemoved, this);
+		sourceAddedSignal.Connect(obs_get_signal_handler(), "source_activate", OBSSourceAdded, this);
+		sourceRemovedSignal.Connect(obs_get_signal_handler(), "source_deactivate", OBSSourceRemoved, this);
 
 		for (size_t i = 0; i < controls.size(); i++) {
 			const auto source = controls[i]->GetSource();

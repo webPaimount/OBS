@@ -32,8 +32,7 @@ static struct nvenc_info adapter_info[MAX_CAPS] = {0};
 
 bool load_nvenc_lib(void)
 {
-	const char *const file = (sizeof(void *) == 8) ? "nvEncodeAPI64.dll"
-						       : "nvEncodeAPI.dll";
+	const char *const file = (sizeof(void *) == 8) ? "nvEncodeAPI64.dll" : "nvEncodeAPI.dll";
 	nvenc_lib = LoadLibraryA(file);
 	return nvenc_lib != NULL;
 }
@@ -81,15 +80,14 @@ static bool get_adapter_caps(IDXGIFactory *factory, uint32_t adapter_idx)
 
 	caps->is_nvidia = true;
 
-	hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, NULL,
-			       0, D3D11_SDK_VERSION, &device, NULL, &context);
+	hr = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, NULL, 0, D3D11_SDK_VERSION, &device, NULL,
+			       &context);
 	if (FAILED(hr))
 		goto finish;
 
 	/* ---------------------------------------------------------------- */
 
-	NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS params = {
-		NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER};
+	NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS params = {NV_ENC_OPEN_ENCODE_SESSION_EX_PARAMS_VER};
 	params.device = device;
 	params.deviceType = NV_ENC_DEVICE_TYPE_DIRECTX;
 	params.apiVersion = NVENCAPI_VERSION;
@@ -131,13 +129,11 @@ finish:
 }
 
 typedef NVENCSTATUS(NVENCAPI *NV_MAX_VER_FUNC)(uint32_t *);
-typedef NVENCSTATUS(NVENCAPI *NV_CREATE_INSTANCE_FUNC)(
-	NV_ENCODE_API_FUNCTION_LIST *);
+typedef NVENCSTATUS(NVENCAPI *NV_CREATE_INSTANCE_FUNC)(NV_ENCODE_API_FUNCTION_LIST *);
 
 static inline uint32_t get_nvenc_ver(void)
 {
-	NV_MAX_VER_FUNC nv_max_ver = (NV_MAX_VER_FUNC)load_nv_func(
-		"NvEncodeAPIGetMaxSupportedVersion");
+	NV_MAX_VER_FUNC nv_max_ver = (NV_MAX_VER_FUNC)load_nv_func("NvEncodeAPIGetMaxSupportedVersion");
 	if (!nv_max_ver) {
 		return 0;
 	}
@@ -158,14 +154,11 @@ static inline bool init_nvenc_internal(void)
 	if (ver == 0)
 		return false;
 
-	uint32_t supported_ver = (NVENC_COMPAT_MAJOR_VER << 4) |
-				 NVENC_COMPAT_MINOR_VER;
+	uint32_t supported_ver = (NVENC_COMPAT_MAJOR_VER << 4) | NVENC_COMPAT_MINOR_VER;
 	if (supported_ver > ver)
 		return false;
 
-	NV_CREATE_INSTANCE_FUNC nv_create_instance =
-		(NV_CREATE_INSTANCE_FUNC)load_nv_func(
-			"NvEncodeAPICreateInstance");
+	NV_CREATE_INSTANCE_FUNC nv_create_instance = (NV_CREATE_INSTANCE_FUNC)load_nv_func("NvEncodeAPICreateInstance");
 	if (!nv_create_instance)
 		return false;
 
@@ -190,13 +183,11 @@ int main(int argc, char *argv[])
 	HRESULT hr;
 
 	HANDLE hMainThread;
-	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
-			GetCurrentProcess(), &hMainThread, 0, FALSE,
+	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hMainThread, 0, FALSE,
 			DUPLICATE_SAME_ACCESS);
 	DWORD threadId;
 	HANDLE hThread;
-	hThread =
-		CreateThread(NULL, 0, TimeoutThread, hMainThread, 0, &threadId);
+	hThread = CreateThread(NULL, 0, TimeoutThread, hMainThread, 0, &threadId);
 	CloseHandle(hThread);
 
 	/* --------------------------------------------------------- */
@@ -229,8 +220,7 @@ int main(int argc, char *argv[])
 
 		printf("[%u]\n", i);
 		printf("is_nvidia=%s\n", caps.is_nvidia ? "true" : "false");
-		printf("supports_av1=%s\n",
-		       caps.supports_av1 ? "true" : "false");
+		printf("supports_av1=%s\n", caps.supports_av1 ? "true" : "false");
 	}
 
 	factory->lpVtbl->Release(factory);
