@@ -27,10 +27,8 @@ public:
 	inline int GetConnectTime() { return connect_time_ms; }
 
 private:
-	void ConfigureAudioTrack(std::string media_stream_id,
-				 std::string cname);
-	void ConfigureVideoTrack(std::string media_stream_id,
-				 std::string cname);
+	void ConfigureAudioTrack(std::string media_stream_id, std::string cname);
+	void ConfigureVideoTrack(std::string media_stream_id, std::string cname);
 	bool Init();
 	bool Setup();
 	bool Connect();
@@ -38,8 +36,7 @@ private:
 	void SendDelete();
 	void StopThread(bool signal);
 
-	void Send(void *data, uintptr_t size, uint64_t duration,
-		  std::shared_ptr<rtc::Track> track,
+	void Send(void *data, uintptr_t size, uint64_t duration, std::shared_ptr<rtc::Track> track,
 		  std::shared_ptr<rtc::RtcpSrReporter> rtcp_sr_reporter);
 
 	obs_output_t *output;

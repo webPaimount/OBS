@@ -46,8 +46,7 @@ typedef unsigned long drm_handle_t;
 
 #endif
 
-typedef void(APIENTRYP PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)(
-	GLenum target, GLeglImageOES image);
+typedef void(APIENTRYP PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)(GLenum target, GLeglImageOES image);
 static PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
 
 static bool find_gl_extension(const char *extension)
@@ -76,8 +75,7 @@ static bool init_egl_image_target_texture_2d_ext(void)
 		}
 
 		glEGLImageTargetTexture2DOES =
-			(PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress(
-				"glEGLImageTargetTexture2DOES");
+			(PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)eglGetProcAddress("glEGLImageTargetTexture2DOES");
 	}
 
 	if (!glEGLImageTargetTexture2DOES)
@@ -86,12 +84,9 @@ static bool init_egl_image_target_texture_2d_ext(void)
 	return true;
 }
 
-static EGLImageKHR
-create_dmabuf_egl_image(EGLDisplay egl_display, unsigned int width,
-			unsigned int height, uint32_t drm_format,
-			uint32_t n_planes, const int *fds,
-			const uint32_t *strides, const uint32_t *offsets,
-			const uint64_t *modifiers)
+static EGLImageKHR create_dmabuf_egl_image(EGLDisplay egl_display, unsigned int width, unsigned int height,
+					   uint32_t drm_format, uint32_t n_planes, const int *fds,
+					   const uint32_t *strides, const uint32_t *offsets, const uint64_t *modifiers)
 {
 	EGLAttrib attribs[47];
 	int atti = 0;
@@ -173,20 +168,17 @@ create_dmabuf_egl_image(EGLDisplay egl_display, unsigned int width,
 
 	attribs[atti++] = EGL_NONE;
 
-	return eglCreateImage(egl_display, EGL_NO_CONTEXT,
-			      EGL_LINUX_DMA_BUF_EXT, 0, attribs);
+	return eglCreateImage(egl_display, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, 0, attribs);
 }
 
-struct gs_texture *gl_egl_create_texture_from_eglimage(
-	EGLDisplay egl_display, uint32_t width, uint32_t height,
-	enum gs_color_format color_format, EGLint target, EGLImage image)
+struct gs_texture *gl_egl_create_texture_from_eglimage(EGLDisplay egl_display, uint32_t width, uint32_t height,
+						       enum gs_color_format color_format, EGLint target, EGLImage image)
 {
 	UNUSED_PARAMETER(egl_display);
 	UNUSED_PARAMETER(target);
 
 	struct gs_texture *texture = NULL;
-	texture = gs_texture_create(width, height, color_format, 1, NULL,
-				    GS_GL_DUMMYTEX);
+	texture = gs_texture_create(width, height, color_format, 1, NULL, GS_GL_DUMMYTEX);
 	const GLuint gltex = *(GLuint *)gs_texture_get_obj(texture);
 
 	gl_bind_texture(GL_TEXTURE_2D, gltex);
@@ -204,12 +196,10 @@ struct gs_texture *gl_egl_create_texture_from_eglimage(
 	return texture;
 }
 
-struct gs_texture *
-gl_egl_create_dmabuf_image(EGLDisplay egl_display, unsigned int width,
-			   unsigned int height, uint32_t drm_format,
-			   enum gs_color_format color_format, uint32_t n_planes,
-			   const int *fds, const uint32_t *strides,
-			   const uint32_t *offsets, const uint64_t *modifiers)
+struct gs_texture *gl_egl_create_dmabuf_image(EGLDisplay egl_display, unsigned int width, unsigned int height,
+					      uint32_t drm_format, enum gs_color_format color_format, uint32_t n_planes,
+					      const int *fds, const uint32_t *strides, const uint32_t *offsets,
+					      const uint64_t *modifiers)
 {
 	struct gs_texture *texture = NULL;
 	EGLImage egl_image;
@@ -217,29 +207,24 @@ gl_egl_create_dmabuf_image(EGLDisplay egl_display, unsigned int width,
 	if (!init_egl_image_target_texture_2d_ext())
 		return NULL;
 
-	egl_image = create_dmabuf_egl_image(egl_display, width, height,
-					    drm_format, n_planes, fds, strides,
-					    offsets, modifiers);
+	egl_image = create_dmabuf_egl_image(egl_display, width, height, drm_format, n_planes, fds, strides, offsets,
+					    modifiers);
 	if (egl_image == EGL_NO_IMAGE) {
-		blog(LOG_ERROR, "Cannot create EGLImage: %s",
-		     gl_egl_error_to_string(eglGetError()));
+		blog(LOG_ERROR, "Cannot create EGLImage: %s", gl_egl_error_to_string(eglGetError()));
 		return NULL;
 	}
 
-	texture = gl_egl_create_texture_from_eglimage(egl_display, width,
-						      height, color_format,
-						      GL_TEXTURE_2D, egl_image);
+	texture =
+		gl_egl_create_texture_from_eglimage(egl_display, width, height, color_format, GL_TEXTURE_2D, egl_image);
 	if (texture)
 		eglDestroyImage(egl_display, egl_image);
 
 	return texture;
 }
 
-struct gs_texture *
-gl_egl_create_texture_from_pixmap(EGLDisplay egl_display, uint32_t width,
-				  uint32_t height,
-				  enum gs_color_format color_format,
-				  EGLint target, EGLClientBuffer pixmap)
+struct gs_texture *gl_egl_create_texture_from_pixmap(EGLDisplay egl_display, uint32_t width, uint32_t height,
+						     enum gs_color_format color_format, EGLint target,
+						     EGLClientBuffer pixmap)
 {
 	if (!init_egl_image_target_texture_2d_ext())
 		return NULL;
@@ -250,17 +235,14 @@ gl_egl_create_texture_from_pixmap(EGLDisplay egl_display, uint32_t width,
 		EGL_NONE,
 	};
 
-	EGLImage image = eglCreateImage(egl_display, EGL_NO_CONTEXT,
-					EGL_NATIVE_PIXMAP_KHR, pixmap,
-					pixmap_attrs);
+	EGLImage image = eglCreateImage(egl_display, EGL_NO_CONTEXT, EGL_NATIVE_PIXMAP_KHR, pixmap, pixmap_attrs);
 	if (image == EGL_NO_IMAGE) {
-		blog(LOG_DEBUG, "Cannot create EGLImage: %s",
-		     gl_egl_error_to_string(eglGetError()));
+		blog(LOG_DEBUG, "Cannot create EGLImage: %s", gl_egl_error_to_string(eglGetError()));
 		return NULL;
 	}
 
-	struct gs_texture *texture = gl_egl_create_texture_from_eglimage(
-		egl_display, width, height, color_format, target, image);
+	struct gs_texture *texture =
+		gl_egl_create_texture_from_eglimage(egl_display, width, height, color_format, target, image);
 	eglDestroyImage(egl_display, image);
 
 	return texture;
@@ -271,16 +253,13 @@ static inline bool is_implicit_dmabuf_modifiers_supported(void)
 	return EGL_EXT_image_dma_buf_import > 0;
 }
 
-static inline bool query_dmabuf_formats(EGLDisplay egl_display,
-					EGLint **formats, EGLint *num_formats)
+static inline bool query_dmabuf_formats(EGLDisplay egl_display, EGLint **formats, EGLint *num_formats)
 {
 	EGLint max_formats = 0;
 	EGLint *format_list = NULL;
 
-	if (!glad_eglQueryDmaBufFormatsEXT(egl_display, 0, NULL,
-					   &max_formats)) {
-		blog(LOG_ERROR, "Cannot query the number of formats: %s",
-		     gl_egl_error_to_string(eglGetError()));
+	if (!glad_eglQueryDmaBufFormatsEXT(egl_display, 0, NULL, &max_formats)) {
+		blog(LOG_ERROR, "Cannot query the number of formats: %s", gl_egl_error_to_string(eglGetError()));
 		return false;
 	}
 
@@ -290,10 +269,8 @@ static inline bool query_dmabuf_formats(EGLDisplay egl_display,
 		return false;
 	}
 
-	if (!glad_eglQueryDmaBufFormatsEXT(egl_display, max_formats,
-					   format_list, &max_formats)) {
-		blog(LOG_ERROR, "Cannot query a list of formats: %s",
-		     gl_egl_error_to_string(eglGetError()));
+	if (!glad_eglQueryDmaBufFormatsEXT(egl_display, max_formats, format_list, &max_formats)) {
+		blog(LOG_ERROR, "Cannot query a list of formats: %s", gl_egl_error_to_string(eglGetError()));
 		bfree(format_list);
 		return false;
 	}
@@ -303,9 +280,8 @@ static inline bool query_dmabuf_formats(EGLDisplay egl_display,
 	return true;
 }
 
-bool gl_egl_query_dmabuf_capabilities(EGLDisplay egl_display,
-				      enum gs_dmabuf_flags *dmabuf_flags,
-				      uint32_t **formats, size_t *n_formats)
+bool gl_egl_query_dmabuf_capabilities(EGLDisplay egl_display, enum gs_dmabuf_flags *dmabuf_flags, uint32_t **formats,
+				      size_t *n_formats)
 {
 	bool ret = false;
 
@@ -319,41 +295,33 @@ bool gl_egl_query_dmabuf_capabilities(EGLDisplay egl_display,
 		return ret;
 	}
 
-	if (!query_dmabuf_formats(egl_display, (EGLint **)formats,
-				  (EGLint *)n_formats)) {
+	if (!query_dmabuf_formats(egl_display, (EGLint **)formats, (EGLint *)n_formats)) {
 		*n_formats = 0;
 		*formats = NULL;
 	}
 	return ret;
 }
 
-static inline bool query_dmabuf_modifiers(EGLDisplay egl_display,
-					  EGLint drm_format,
-					  EGLuint64KHR **modifiers,
+static inline bool query_dmabuf_modifiers(EGLDisplay egl_display, EGLint drm_format, EGLuint64KHR **modifiers,
 					  EGLuint64KHR *n_modifiers)
 {
 	EGLint max_modifiers;
 
-	if (!glad_eglQueryDmaBufModifiersEXT(egl_display, drm_format, 0, NULL,
-					     NULL, &max_modifiers)) {
-		blog(LOG_ERROR, "Cannot query the number of modifiers: %s",
-		     gl_egl_error_to_string(eglGetError()));
+	if (!glad_eglQueryDmaBufModifiersEXT(egl_display, drm_format, 0, NULL, NULL, &max_modifiers)) {
+		blog(LOG_ERROR, "Cannot query the number of modifiers: %s", gl_egl_error_to_string(eglGetError()));
 		return false;
 	}
 
-	EGLuint64KHR *modifier_list =
-		bzalloc(max_modifiers * sizeof(EGLuint64KHR));
+	EGLuint64KHR *modifier_list = bzalloc(max_modifiers * sizeof(EGLuint64KHR));
 	EGLBoolean *external_only = NULL;
 	if (!modifier_list) {
 		blog(LOG_ERROR, "Unable to allocate memory");
 		return false;
 	}
 
-	if (!glad_eglQueryDmaBufModifiersEXT(egl_display, drm_format,
-					     max_modifiers, modifier_list,
-					     external_only, &max_modifiers)) {
-		blog(LOG_ERROR, "Cannot query a list of modifiers: %s",
-		     gl_egl_error_to_string(eglGetError()));
+	if (!glad_eglQueryDmaBufModifiersEXT(egl_display, drm_format, max_modifiers, modifier_list, external_only,
+					     &max_modifiers)) {
+		blog(LOG_ERROR, "Cannot query a list of modifiers: %s", gl_egl_error_to_string(eglGetError()));
 		bfree(modifier_list);
 		return false;
 	}
@@ -363,17 +331,14 @@ static inline bool query_dmabuf_modifiers(EGLDisplay egl_display,
 	return true;
 }
 
-bool gl_egl_query_dmabuf_modifiers_for_format(EGLDisplay egl_display,
-					      uint32_t drm_format,
-					      uint64_t **modifiers,
+bool gl_egl_query_dmabuf_modifiers_for_format(EGLDisplay egl_display, uint32_t drm_format, uint64_t **modifiers,
 					      size_t *n_modifiers)
 {
 	if (!glad_eglQueryDmaBufModifiersEXT) {
 		blog(LOG_ERROR, "Unable to load eglQueryDmaBufModifiersEXT");
 		return false;
 	}
-	if (!query_dmabuf_modifiers(egl_display, drm_format, modifiers,
-				    n_modifiers)) {
+	if (!query_dmabuf_modifiers(egl_display, drm_format, modifiers, n_modifiers)) {
 		*n_modifiers = 0;
 		*modifiers = NULL;
 		return false;

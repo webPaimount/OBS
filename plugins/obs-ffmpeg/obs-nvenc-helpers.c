@@ -33,8 +33,7 @@ bool nv_fail2(obs_encoder_t *encoder, void *session, const char *format, ...)
 	return true;
 }
 
-bool nv_failed2(obs_encoder_t *encoder, void *session, NVENCSTATUS err,
-		const char *func, const char *call)
+bool nv_failed2(obs_encoder_t *encoder, void *session, NVENCSTATUS err, const char *func, const char *call)
 {
 	struct dstr error_message = {0};
 	const char *nvenc_error = NULL;
@@ -54,30 +53,25 @@ bool nv_failed2(obs_encoder_t *encoder, void *session, NVENCSTATUS err,
 
 	switch (err) {
 	case NV_ENC_ERR_OUT_OF_MEMORY:
-		obs_encoder_set_last_error(
-			encoder, obs_module_text("NVENC.TooManySessions"));
+		obs_encoder_set_last_error(encoder, obs_module_text("NVENC.TooManySessions"));
 		break;
 
 	case NV_ENC_ERR_NO_ENCODE_DEVICE:
 	case NV_ENC_ERR_UNSUPPORTED_DEVICE:
-		obs_encoder_set_last_error(
-			encoder, obs_module_text("NVENC.UnsupportedDevice"));
+		obs_encoder_set_last_error(encoder, obs_module_text("NVENC.UnsupportedDevice"));
 		break;
 
 	case NV_ENC_ERR_INVALID_VERSION:
-		obs_encoder_set_last_error(
-			encoder, obs_module_text("NVENC.OutdatedDriver"));
+		obs_encoder_set_last_error(encoder, obs_module_text("NVENC.OutdatedDriver"));
 		break;
 
 	default:
 		if (nvenc_error && *nvenc_error) {
-			dstr_printf(&error_message, "NVENC Error: %s (%s)",
-				    nvenc_error, nv_error_name(err));
+			dstr_printf(&error_message, "NVENC Error: %s (%s)", nvenc_error, nv_error_name(err));
 		} else {
 
-			dstr_printf(&error_message,
-				    "NVENC Error: %s: %s failed: %d (%s)", func,
-				    call, (int)err, nv_error_name(err));
+			dstr_printf(&error_message, "NVENC Error: %s: %s failed: %d (%s)", func, call, (int)err,
+				    nv_error_name(err));
 		}
 		obs_encoder_set_last_error(encoder, error_message.array);
 		dstr_free(&error_message);
@@ -85,11 +79,9 @@ bool nv_failed2(obs_encoder_t *encoder, void *session, NVENCSTATUS err,
 	}
 
 	if (nvenc_error && *nvenc_error) {
-		error("%s: %s failed: %d (%s): %s", func, call, (int)err,
-		      nv_error_name(err), nvenc_error);
+		error("%s: %s failed: %d (%s): %s", func, call, (int)err, nv_error_name(err), nvenc_error);
 	} else {
-		error("%s: %s failed: %d (%s)", func, call, (int)err,
-		      nv_error_name(err));
+		error("%s: %s failed: %d (%s)", func, call, (int)err, nv_error_name(err));
 	}
 	return true;
 }
@@ -98,8 +90,7 @@ bool nv_failed2(obs_encoder_t *encoder, void *session, NVENCSTATUS err,
 
 bool load_nvenc_lib(void)
 {
-	const char *const file = (sizeof(void *) == 8) ? "nvEncodeAPI64.dll"
-						       : "nvEncodeAPI.dll";
+	const char *const file = (sizeof(void *) == 8) ? "nvEncodeAPI64.dll" : "nvEncodeAPI.dll";
 	nvenc_lib = os_dlopen(file);
 	return nvenc_lib != NULL;
 }
@@ -124,8 +115,7 @@ uint32_t get_nvenc_ver()
 		if (failed)
 			return 0;
 
-		nv_max_ver = (NV_MAX_VER_FUNC)load_nv_func(
-			"NvEncodeAPIGetMaxSupportedVersion");
+		nv_max_ver = (NV_MAX_VER_FUNC)load_nv_func("NvEncodeAPIGetMaxSupportedVersion");
 		if (!nv_max_ver) {
 			failed = true;
 			return 0;
@@ -189,30 +179,24 @@ static inline bool init_nvenc_internal(obs_encoder_t *encoder)
 
 	uint32_t ver = get_nvenc_ver();
 	if (ver == 0) {
-		obs_encoder_set_last_error(
-			encoder,
-			"Missing NvEncodeAPIGetMaxSupportedVersion, check "
-			"your video card drivers are up to date.");
+		obs_encoder_set_last_error(encoder, "Missing NvEncodeAPIGetMaxSupportedVersion, check "
+						    "your video card drivers are up to date.");
 		return false;
 	}
 
-	uint32_t supported_ver = (NVENC_COMPAT_MAJOR_VER << 4) |
-				 NVENC_COMPAT_MINOR_VER;
+	uint32_t supported_ver = (NVENC_COMPAT_MAJOR_VER << 4) | NVENC_COMPAT_MINOR_VER;
 	if (supported_ver > ver) {
-		obs_encoder_set_last_error(
-			encoder, obs_module_text("NVENC.OutdatedDriver"));
+		obs_encoder_set_last_error(encoder, obs_module_text("NVENC.OutdatedDriver"));
 
 		error("Current driver version does not support this NVENC "
 		      "version, please upgrade your driver");
 		return false;
 	}
 
-	nv_create_instance = (NV_CREATE_INSTANCE_FUNC)load_nv_func(
-		"NvEncodeAPICreateInstance");
+	nv_create_instance = (NV_CREATE_INSTANCE_FUNC)load_nv_func("NvEncodeAPICreateInstance");
 	if (!nv_create_instance) {
-		obs_encoder_set_last_error(
-			encoder, "Missing NvEncodeAPICreateInstance, check "
-				 "your video card drivers are up to date.");
+		obs_encoder_set_last_error(encoder, "Missing NvEncodeAPICreateInstance, check "
+						    "your video card drivers are up to date.");
 		return false;
 	}
 
@@ -272,8 +256,7 @@ static bool av1_supported(void)
 
 	for (;;) {
 		char data[2048];
-		size_t len =
-			os_process_pipe_read(pp, (uint8_t *)data, sizeof(data));
+		size_t len = os_process_pipe_read(pp, (uint8_t *)data, sizeof(data));
 		if (!len)
 			break;
 
@@ -283,10 +266,9 @@ static bool av1_supported(void)
 	os_process_pipe_destroy(pp);
 
 	if (dstr_is_empty(&caps_str)) {
-		blog(LOG_WARNING,
-		     "[NVENC] Seems the NVENC test subprocess crashed. "
-		     "Better there than here I guess. Let's just "
-		     "skip NVENC AV1 detection then I suppose.");
+		blog(LOG_WARNING, "[NVENC] Seems the NVENC test subprocess crashed. "
+				  "Better there than here I guess. Let's just "
+				  "skip NVENC AV1 detection then I suppose.");
 		goto fail;
 	}
 

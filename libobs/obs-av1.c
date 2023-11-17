@@ -26,14 +26,12 @@ static inline uint64_t leb128(const uint8_t *buf, size_t size, size_t *len)
 	return value;
 }
 
-static inline unsigned int get_bits(uint8_t val, unsigned int n,
-				    unsigned int count)
+static inline unsigned int get_bits(uint8_t val, unsigned int n, unsigned int count)
 {
 	return (val >> (8 - n - count)) & ((1 << (count - 1)) * 2 - 1);
 }
 
-static void parse_obu_header(const uint8_t *buf, size_t size, size_t *obu_start,
-			     size_t *obu_size, int *obu_type)
+static void parse_obu_header(const uint8_t *buf, size_t size, size_t *obu_start, size_t *obu_size, int *obu_type)
 {
 	int extension_flag, has_size_field;
 	size_t size_len = 0;
@@ -55,8 +53,7 @@ static void parse_obu_header(const uint8_t *buf, size_t size, size_t *obu_start,
 	(*obu_start)++;
 
 	if (has_size_field)
-		*obu_size = (size_t)leb128(buf + *obu_start, size - *obu_start,
-					   &size_len);
+		*obu_size = (size_t)leb128(buf + *obu_start, size - *obu_start, &size_len);
 	else
 		*obu_size = size - 1;
 
@@ -70,16 +67,13 @@ bool obs_av1_keyframe(const uint8_t *data, size_t size)
 	while (start < end) {
 		size_t obu_start, obu_size;
 		int obu_type;
-		parse_obu_header(start, end - start, &obu_start, &obu_size,
-				 &obu_type);
+		parse_obu_header(start, end - start, &obu_start, &obu_size, &obu_type);
 
 		if (obu_size) {
-			if (obu_type == OBS_OBU_FRAME ||
-			    obu_type == OBS_OBU_FRAME_HEADER) {
+			if (obu_type == OBS_OBU_FRAME || obu_type == OBS_OBU_FRAME_HEADER) {
 				uint8_t val = *(start + obu_start);
-				if (!get_bits(val, 0, 1)) // show_existing_frame
-					return get_bits(val, 1, 2) ==
-					       0; // frame_type
+				if (!get_bits(val, 0, 1))                // show_existing_frame
+					return get_bits(val, 1, 2) == 0; // frame_type
 				return false;
 			}
 		}
@@ -90,8 +84,7 @@ bool obs_av1_keyframe(const uint8_t *data, size_t size)
 	return false;
 }
 
-void obs_extract_av1_headers(const uint8_t *packet, size_t size,
-			     uint8_t **new_packet_data, size_t *new_packet_size,
+void obs_extract_av1_headers(const uint8_t *packet, size_t size, uint8_t **new_packet_data, size_t *new_packet_size,
 			     uint8_t **header_data, size_t *header_size)
 {
 	DARRAY(uint8_t) new_packet;
@@ -104,11 +97,9 @@ void obs_extract_av1_headers(const uint8_t *packet, size_t size,
 	while (start < end) {
 		size_t obu_start, obu_size;
 		int obu_type;
-		parse_obu_header(start, end - start, &obu_start, &obu_size,
-				 &obu_type);
+		parse_obu_header(start, end - start, &obu_start, &obu_size, &obu_type);
 
-		if (obu_type == OBS_OBU_METADATA ||
-		    obu_type == OBS_OBU_SEQUENCE_HEADER) {
+		if (obu_type == OBS_OBU_METADATA || obu_type == OBS_OBU_SEQUENCE_HEADER) {
 			da_push_back_array(header, start, obu_start + obu_size);
 		}
 		da_push_back_array(new_packet, start, obu_start + obu_size);

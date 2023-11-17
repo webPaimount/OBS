@@ -27,8 +27,7 @@ struct linux_data {
 	VADisplay vaDisplay;
 };
 
-mfxStatus simple_alloc(mfxHDL pthis, mfxFrameAllocRequest *request,
-		       mfxFrameAllocResponse *response)
+mfxStatus simple_alloc(mfxHDL pthis, mfxFrameAllocRequest *request, mfxFrameAllocResponse *response)
 {
 	UNUSED_PARAMETER(pthis);
 	UNUSED_PARAMETER(request);
@@ -67,8 +66,7 @@ mfxStatus simple_free(mfxHDL pthis, mfxFrameAllocResponse *response)
 	return MFX_ERR_UNSUPPORTED;
 }
 
-mfxStatus simple_copytex(mfxHDL pthis, mfxMemId mid, mfxU32 tex_handle,
-			 mfxU64 lock_key, mfxU64 *next_key)
+mfxStatus simple_copytex(mfxHDL pthis, mfxMemId mid, mfxU32 tex_handle, mfxU64 lock_key, mfxU64 *next_key)
 {
 	UNUSED_PARAMETER(pthis);
 	UNUSED_PARAMETER(mid);
@@ -84,10 +82,8 @@ void ClearRGBSurfaceVMem(mfxMemId memId);
 #endif
 
 // Initialize Intel VPL Session, device/display and memory manager
-mfxStatus Initialize(mfxVersion ver, mfxSession *pSession,
-		     mfxFrameAllocator *pmfxAllocator, mfxHDL *deviceHandle,
-		     bool bCreateSharedHandles, enum qsv_codec codec,
-		     void **data)
+mfxStatus Initialize(mfxVersion ver, mfxSession *pSession, mfxFrameAllocator *pmfxAllocator, mfxHDL *deviceHandle,
+		     bool bCreateSharedHandles, enum qsv_codec codec, void **data)
 {
 	UNUSED_PARAMETER(ver);
 	UNUSED_PARAMETER(pmfxAllocator);
@@ -102,19 +98,15 @@ mfxStatus Initialize(mfxVersion ver, mfxSession *pSession,
 
 	impl.Type = MFX_VARIANT_TYPE_U32;
 	impl.Data.U32 = MFX_IMPL_TYPE_HARDWARE;
-	MFXSetConfigFilterProperty(
-		cfg, (const mfxU8 *)"mfxImplDescription.Impl", impl);
+	MFXSetConfigFilterProperty(cfg, (const mfxU8 *)"mfxImplDescription.Impl", impl);
 
 	impl.Type = MFX_VARIANT_TYPE_U32;
 	impl.Data.U32 = INTEL_VENDOR_ID;
-	MFXSetConfigFilterProperty(
-		cfg, (const mfxU8 *)"mfxImplDescription.VendorID", impl);
+	MFXSetConfigFilterProperty(cfg, (const mfxU8 *)"mfxImplDescription.VendorID", impl);
 
 	impl.Type = MFX_VARIANT_TYPE_U32;
 	impl.Data.U32 = MFX_ACCEL_MODE_VIA_VAAPI_DRM_RENDER_NODE;
-	MFXSetConfigFilterProperty(
-		cfg, (const mfxU8 *)"mfxImplDescription.AccelerationMode",
-		impl);
+	MFXSetConfigFilterProperty(cfg, (const mfxU8 *)"mfxImplDescription.AccelerationMode", impl);
 
 	int fd = -1;
 	if (codec == QSV_CODEC_AVC && default_h264_device)
@@ -124,8 +116,7 @@ mfxStatus Initialize(mfxVersion ver, mfxSession *pSession,
 	if (codec == QSV_CODEC_AV1 && default_av1_device)
 		fd = open(default_av1_device, O_RDWR);
 	if (fd < 0) {
-		blog(LOG_ERROR, "Failed to open device '%s'",
-		     default_h264_device);
+		blog(LOG_ERROR, "Failed to open device '%s'", default_h264_device);
 		return MFX_ERR_DEVICE_FAILED;
 	}
 
@@ -152,12 +143,10 @@ mfxStatus Initialize(mfxVersion ver, mfxSession *pSession,
 		return MFX_ERR_DEVICE_FAILED;
 	}
 
-	sts = MFXVideoCORE_SetHandle(*pSession, MFX_HANDLE_VA_DISPLAY,
-				     vaDisplay);
+	sts = MFXVideoCORE_SetHandle(*pSession, MFX_HANDLE_VA_DISPLAY, vaDisplay);
 	MSDK_CHECK_RESULT(sts, MFX_ERR_NONE, sts);
 
-	struct linux_data *d =
-		(struct linux_data *)bmalloc(sizeof(struct linux_data));
+	struct linux_data *d = (struct linux_data *)bmalloc(sizeof(struct linux_data));
 	d->fd = fd;
 	d->vaDisplay = (VADisplay)vaDisplay;
 	*data = d;
@@ -193,8 +182,7 @@ double TimeDiffMsec(mfxTime tfinish, mfxTime tstart)
 
 extern "C" void util_cpuid(int cpuinfo[4], int level)
 {
-	__get_cpuid(level, (unsigned int *)&cpuinfo[0],
-		    (unsigned int *)&cpuinfo[1], (unsigned int *)&cpuinfo[2],
+	__get_cpuid(level, (unsigned int *)&cpuinfo[0], (unsigned int *)&cpuinfo[1], (unsigned int *)&cpuinfo[2],
 		    (unsigned int *)&cpuinfo[3]);
 }
 
@@ -231,8 +219,7 @@ static void vaapi_open(char *device_path, struct vaapi_device *device)
 
 	const char *driver = vaQueryVendorString(display);
 	if (strstr(driver, "Intel i965 driver") != nullptr) {
-		blog(LOG_WARNING,
-		     "Legacy intel-vaapi-driver detected, incompatible with QSV");
+		blog(LOG_WARNING, "Legacy intel-vaapi-driver detected, incompatible with QSV");
 		vaTerminate(display);
 		close(fd);
 		return;
@@ -249,15 +236,13 @@ static void vaapi_close(struct vaapi_device *device)
 	close(device->fd);
 }
 
-static uint32_t vaapi_check_support(VADisplay display, VAProfile profile,
-				    VAEntrypoint entrypoint)
+static uint32_t vaapi_check_support(VADisplay display, VAProfile profile, VAEntrypoint entrypoint)
 {
 	bool ret = false;
 	VAConfigAttrib attrib[1];
 	attrib->type = VAConfigAttribRateControl;
 
-	VAStatus va_status =
-		vaGetConfigAttributes(display, profile, entrypoint, attrib, 1);
+	VAStatus va_status = vaGetConfigAttributes(display, profile, entrypoint, attrib, 1);
 
 	uint32_t rc = 0;
 	switch (va_status) {
@@ -276,21 +261,14 @@ static uint32_t vaapi_check_support(VADisplay display, VAProfile profile,
 static bool vaapi_supports_h264(VADisplay display)
 {
 	bool ret = false;
-	ret |= vaapi_check_support(display, VAProfileH264ConstrainedBaseline,
-				   VAEntrypointEncSlice);
-	ret |= vaapi_check_support(display, VAProfileH264Main,
-				   VAEntrypointEncSlice);
-	ret |= vaapi_check_support(display, VAProfileH264High,
-				   VAEntrypointEncSlice);
+	ret |= vaapi_check_support(display, VAProfileH264ConstrainedBaseline, VAEntrypointEncSlice);
+	ret |= vaapi_check_support(display, VAProfileH264Main, VAEntrypointEncSlice);
+	ret |= vaapi_check_support(display, VAProfileH264High, VAEntrypointEncSlice);
 
 	if (!ret) {
-		ret |= vaapi_check_support(display,
-					   VAProfileH264ConstrainedBaseline,
-					   VAEntrypointEncSliceLP);
-		ret |= vaapi_check_support(display, VAProfileH264Main,
-					   VAEntrypointEncSliceLP);
-		ret |= vaapi_check_support(display, VAProfileH264High,
-					   VAEntrypointEncSliceLP);
+		ret |= vaapi_check_support(display, VAProfileH264ConstrainedBaseline, VAEntrypointEncSliceLP);
+		ret |= vaapi_check_support(display, VAProfileH264Main, VAEntrypointEncSliceLP);
+		ret |= vaapi_check_support(display, VAProfileH264High, VAEntrypointEncSliceLP);
 	}
 
 	return ret;
@@ -300,20 +278,16 @@ static bool vaapi_supports_av1(VADisplay display)
 {
 	bool ret = false;
 	// Are there any devices with non-LowPower entrypoints?
-	ret |= vaapi_check_support(display, VAProfileAV1Profile0,
-				   VAEntrypointEncSlice);
-	ret |= vaapi_check_support(display, VAProfileAV1Profile0,
-				   VAEntrypointEncSliceLP);
+	ret |= vaapi_check_support(display, VAProfileAV1Profile0, VAEntrypointEncSlice);
+	ret |= vaapi_check_support(display, VAProfileAV1Profile0, VAEntrypointEncSliceLP);
 	return ret;
 }
 
 static bool vaapi_supports_hevc(VADisplay display)
 {
 	bool ret = false;
-	ret |= vaapi_check_support(display, VAProfileHEVCMain,
-				   VAEntrypointEncSlice);
-	ret |= vaapi_check_support(display, VAProfileHEVCMain,
-				   VAEntrypointEncSliceLP);
+	ret |= vaapi_check_support(display, VAProfileHEVCMain, VAEntrypointEncSlice);
+	ret |= vaapi_check_support(display, VAProfileHEVCMain, VAEntrypointEncSliceLP);
 	return ret;
 }
 
@@ -337,8 +311,7 @@ void check_adapters(struct adapter_info *adapters, size_t *adapter_count)
 				goto next_entry;
 
 			adapter_idx = atoi(&dp->d_name[7]) - 128;
-			if (adapter_idx >= (ssize_t)*adapter_count ||
-			    adapter_idx < 0)
+			if (adapter_idx >= (ssize_t)*adapter_count || adapter_idx < 0)
 				goto next_entry;
 
 			*adapter_count = adapter_idx + 1;
@@ -349,24 +322,19 @@ void check_adapters(struct adapter_info *adapters, size_t *adapter_count)
 				goto next_entry;
 
 			adapter = &adapters[adapter_idx];
-			adapter->is_intel = strstr(device.driver, "Intel") !=
-					    nullptr;
+			adapter->is_intel = strstr(device.driver, "Intel") != nullptr;
 			// This is currently only used for LowPower coding which is busted on VA-API anyway.
 			adapter->is_dgpu = false;
-			adapter->supports_av1 =
-				vaapi_supports_av1(device.display);
-			adapter->supports_hevc =
-				vaapi_supports_hevc(device.display);
+			adapter->supports_av1 = vaapi_supports_av1(device.display);
+			adapter->supports_hevc = vaapi_supports_hevc(device.display);
 
 			if (adapter->is_intel && default_h264_device == nullptr)
 				default_h264_device = strdup(full_path.array);
 
-			if (adapter->is_intel && adapter->supports_av1 &&
-			    default_av1_device == nullptr)
+			if (adapter->is_intel && adapter->supports_av1 && default_av1_device == nullptr)
 				default_av1_device = strdup(full_path.array);
 
-			if (adapter->is_intel && adapter->supports_hevc &&
-			    default_hevc_device == nullptr)
+			if (adapter->is_intel && adapter->supports_hevc && default_hevc_device == nullptr)
 				default_hevc_device = strdup(full_path.array);
 
 			vaapi_close(&device);

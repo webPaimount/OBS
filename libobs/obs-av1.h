@@ -25,10 +25,8 @@ enum {
 /* Helpers for parsing AV1 OB units.  */
 
 EXPORT bool obs_av1_keyframe(const uint8_t *data, size_t size);
-EXPORT void obs_extract_av1_headers(const uint8_t *packet, size_t size,
-				    uint8_t **new_packet_data,
-				    size_t *new_packet_size,
-				    uint8_t **header_data, size_t *header_size);
+EXPORT void obs_extract_av1_headers(const uint8_t *packet, size_t size, uint8_t **new_packet_data,
+				    size_t *new_packet_size, uint8_t **header_data, size_t *header_size);
 
 #ifdef __cplusplus
 }

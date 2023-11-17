@@ -6,10 +6,7 @@ class MuteCheckBox : public QCheckBox {
 	Q_OBJECT
 
 public:
-	MuteCheckBox(QWidget *parent = nullptr) : QCheckBox(parent)
-	{
-		setTristate(true);
-	}
+	MuteCheckBox(QWidget *parent = nullptr) : QCheckBox(parent) { setTristate(true); }
 
 protected:
 	/* While we need it to be tristate internally, we don't want a user being

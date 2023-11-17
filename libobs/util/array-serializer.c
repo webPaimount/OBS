@@ -30,8 +30,7 @@ static int64_t array_output_get_pos(void *param)
 	return (int64_t)data->bytes.num;
 }
 
-void array_output_serializer_init(struct serializer *s,
-				  struct array_output_data *data)
+void array_output_serializer_init(struct serializer *s, struct array_output_data *data)
 {
 	memset(s, 0, sizeof(struct serializer));
 	memset(data, 0, sizeof(struct array_output_data));

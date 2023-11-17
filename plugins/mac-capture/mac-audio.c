@@ -80,9 +80,8 @@ static bool find_device_id_by_uid(struct coreaudio_data *ca)
 	OSStatus stat;
 	bool success;
 
-	AudioObjectPropertyAddress addr = {
-		.mScope = kAudioObjectPropertyScopeGlobal,
-		.mElement = kAudioObjectPropertyElementMain};
+	AudioObjectPropertyAddress addr = {.mScope = kAudioObjectPropertyScopeGlobal,
+					   .mElement = kAudioObjectPropertyElementMain};
 
 	if (!ca->device_uid)
 		ca->device_uid = bstrdup("default");
@@ -102,14 +101,12 @@ static bool find_device_id_by_uid(struct coreaudio_data *ca)
 		}
 	}
 
-	cf_uid = CFStringCreateWithCString(NULL, ca->device_uid,
-					   kCFStringEncodingUTF8);
+	cf_uid = CFStringCreateWithCString(NULL, ca->device_uid, kCFStringEncodingUTF8);
 
 	if (ca->default_device) {
 		addr.mSelector = PROPERTY_DEFAULT_DEVICE;
-		stat = AudioObjectGetPropertyData(kAudioObjectSystemObject,
-						  &addr, qual_size, &qual,
-						  &size, &ca->device_id);
+		stat = AudioObjectGetPropertyData(kAudioObjectSystemObject, &addr, qual_size, &qual, &size,
+						  &ca->device_id);
 		success = (stat == noErr);
 	} else {
 		success = coreaudio_get_device_id(cf_uid, &ca->device_id);
@@ -121,8 +118,7 @@ static bool find_device_id_by_uid(struct coreaudio_data *ca)
 	return success;
 }
 
-static inline void ca_warn(struct coreaudio_data *ca, const char *func,
-			   const char *format, ...)
+static inline void ca_warn(struct coreaudio_data *ca, const char *func, const char *format, ...)
 {
 	va_list args;
 	struct dstr str = {0};
@@ -137,12 +133,10 @@ static inline void ca_warn(struct coreaudio_data *ca, const char *func,
 	va_end(args);
 }
 
-static inline bool ca_success(OSStatus stat, struct coreaudio_data *ca,
-			      const char *func, const char *action)
+static inline bool ca_success(OSStatus stat, struct coreaudio_data *ca, const char *func, const char *action)
 {
 	if (stat != noErr) {
-		blog(LOG_WARNING, "[%s]:[device '%s'] %s failed: %d", func,
-		     ca->device_name, action, (int)stat);
+		blog(LOG_WARNING, "[%s]:[device '%s'] %s failed: %d", func, ca->device_name, action, (int)stat);
 		return false;
 	}
 
@@ -154,19 +148,15 @@ enum coreaudio_io_type {
 	IO_TYPE_OUTPUT,
 };
 
-static inline bool enable_io(struct coreaudio_data *ca,
-			     enum coreaudio_io_type type, bool enable)
+static inline bool enable_io(struct coreaudio_data *ca, enum coreaudio_io_type type, bool enable)
 {
 	UInt32 enable_int = enable;
 	return set_property(ca->unit, kAudioOutputUnitProperty_EnableIO,
-			    (type == IO_TYPE_INPUT) ? SCOPE_INPUT
-						    : SCOPE_OUTPUT,
-			    (type == IO_TYPE_INPUT) ? BUS_INPUT : BUS_OUTPUT,
-			    &enable_int, sizeof(enable_int));
+			    (type == IO_TYPE_INPUT) ? SCOPE_INPUT : SCOPE_OUTPUT,
+			    (type == IO_TYPE_INPUT) ? BUS_INPUT : BUS_OUTPUT, &enable_int, sizeof(enable_int));
 }
 
-static inline enum audio_format convert_ca_format(UInt32 format_flags,
-						  UInt32 bits)
+static inline enum audio_format convert_ca_format(UInt32 format_flags, UInt32 bits)
 {
 	bool planar = (format_flags & kAudioFormatFlagIsNonInterleaved) != 0;
 
@@ -224,8 +214,7 @@ static bool coreaudio_init_format(struct coreaudio_data *ca)
 	}
 	channels = get_audio_channels(aoi.speakers);
 
-	stat = get_property(ca->unit, kAudioUnitProperty_StreamFormat,
-			    SCOPE_INPUT, BUS_INPUT, &desc, &size);
+	stat = get_property(ca->unit, kAudioUnitProperty_StreamFormat, SCOPE_INPUT, BUS_INPUT, &desc, &size);
 	if (!ca_success(stat, ca, "coreaudio_init_format", "get input format"))
 		return false;
 
@@ -235,12 +224,10 @@ static bool coreaudio_init_format(struct coreaudio_data *ca)
 	if (desc.mChannelsPerFrame > 8) {
 		desc.mChannelsPerFrame = channels;
 		desc.mBytesPerFrame = channels * desc.mBitsPerChannel / 8;
-		desc.mBytesPerPacket =
-			desc.mFramesPerPacket * desc.mBytesPerFrame;
+		desc.mBytesPerPacket = desc.mFramesPerPacket * desc.mBytesPerFrame;
 	}
 
-	stat = set_property(ca->unit, kAudioUnitProperty_StreamFormat,
-			    SCOPE_OUTPUT, BUS_INPUT, &desc, size);
+	stat = set_property(ca->unit, kAudioUnitProperty_StreamFormat, SCOPE_OUTPUT, BUS_INPUT, &desc, size);
 	if (!ca_success(stat, ca, "coreaudio_init_format", "set output format"))
 		return false;
 
@@ -254,8 +241,7 @@ static bool coreaudio_init_format(struct coreaudio_data *ca)
 		ca_warn(ca, "coreaudio_init_format",
 			"unknown format flags: "
 			"%u, bits: %u",
-			(unsigned int)desc.mFormatFlags,
-			(unsigned int)desc.mBitsPerChannel);
+			(unsigned int)desc.mFormatFlags, (unsigned int)desc.mBitsPerChannel);
 		return false;
 	}
 
@@ -280,19 +266,15 @@ static bool coreaudio_init_buffer(struct coreaudio_data *ca)
 	UInt32 frames = 0;
 	OSStatus stat;
 
-	AudioObjectPropertyAddress addr = {
-		kAudioDevicePropertyStreamConfiguration,
-		kAudioDevicePropertyScopeInput,
-		kAudioObjectPropertyElementMain};
+	AudioObjectPropertyAddress addr = {kAudioDevicePropertyStreamConfiguration, kAudioDevicePropertyScopeInput,
+					   kAudioObjectPropertyElementMain};
 
-	stat = AudioObjectGetPropertyDataSize(ca->device_id, &addr, 0, NULL,
-					      &buf_size);
+	stat = AudioObjectGetPropertyDataSize(ca->device_id, &addr, 0, NULL, &buf_size);
 	if (!ca_success(stat, ca, "coreaudio_init_buffer", "get list size"))
 		return false;
 
 	size = sizeof(frames);
-	stat = get_property(ca->unit, kAudioDevicePropertyBufferFrameSize,
-			    SCOPE_GLOBAL, 0, &frames, &size);
+	stat = get_property(ca->unit, kAudioDevicePropertyBufferFrameSize, SCOPE_GLOBAL, 0, &frames, &size);
 	if (!ca_success(stat, ca, "coreaudio_init_buffer", "get frame size"))
 		return false;
 
@@ -300,8 +282,7 @@ static bool coreaudio_init_buffer(struct coreaudio_data *ca)
 
 	ca->buf_list = bmalloc(buf_size);
 
-	stat = AudioObjectGetPropertyData(ca->device_id, &addr, 0, NULL,
-					  &buf_size, ca->buf_list);
+	stat = AudioObjectGetPropertyData(ca->device_id, &addr, 0, NULL, &buf_size, ca->buf_list);
 	if (!ca_success(stat, ca, "coreaudio_init_buffer", "allocate")) {
 		bfree(ca->buf_list);
 		ca->buf_list = NULL;
@@ -326,17 +307,14 @@ static void buf_list_free(AudioBufferList *buf_list)
 	}
 }
 
-static OSStatus input_callback(void *data,
-			       AudioUnitRenderActionFlags *action_flags,
-			       const AudioTimeStamp *ts_data, UInt32 bus_num,
-			       UInt32 frames, AudioBufferList *ignored_buffers)
+static OSStatus input_callback(void *data, AudioUnitRenderActionFlags *action_flags, const AudioTimeStamp *ts_data,
+			       UInt32 bus_num, UInt32 frames, AudioBufferList *ignored_buffers)
 {
 	struct coreaudio_data *ca = data;
 	OSStatus stat;
 	struct obs_source_audio audio;
 
-	stat = AudioUnitRender(ca->unit, action_flags, ts_data, bus_num, frames,
-			       ca->buf_list);
+	stat = AudioUnitRender(ca->unit, action_flags, ts_data, bus_num, frames, ca->buf_list);
 	if (!ca_success(stat, ca, "input_callback", "audio retrieval"))
 		return noErr;
 
@@ -374,8 +352,7 @@ static void *reconnect_thread(void *param)
 
 	ca->reconnecting = true;
 
-	while (os_event_timedwait(ca->exit_event, ca->retry_time) ==
-	       ETIMEDOUT) {
+	while (os_event_timedwait(ca->exit_event, ca->retry_time) == ETIMEDOUT) {
 		if (coreaudio_init(ca))
 			break;
 	}
@@ -400,9 +377,8 @@ static void coreaudio_begin_reconnect(struct coreaudio_data *ca)
 		     ret);
 }
 
-static OSStatus
-notification_callback(AudioObjectID id, UInt32 num_addresses,
-		      const AudioObjectPropertyAddress addresses[], void *data)
+static OSStatus notification_callback(AudioObjectID id, UInt32 num_addresses,
+				      const AudioObjectPropertyAddress addresses[], void *data)
 {
 	struct coreaudio_data *ca = data;
 
@@ -429,47 +405,34 @@ notification_callback(AudioObjectID id, UInt32 num_addresses,
 
 static OSStatus add_listener(struct coreaudio_data *ca, UInt32 property)
 {
-	AudioObjectPropertyAddress addr = {property,
-					   kAudioObjectPropertyScopeGlobal,
-					   kAudioObjectPropertyElementMain};
+	AudioObjectPropertyAddress addr = {property, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMain};
 
-	return AudioObjectAddPropertyListener(ca->device_id, &addr,
-					      notification_callback, ca);
+	return AudioObjectAddPropertyListener(ca->device_id, &addr, notification_callback, ca);
 }
 
 static bool coreaudio_init_hooks(struct coreaudio_data *ca)
 {
 	OSStatus stat;
-	AURenderCallbackStruct callback_info = {.inputProc = input_callback,
-						.inputProcRefCon = ca};
+	AURenderCallbackStruct callback_info = {.inputProc = input_callback, .inputProcRefCon = ca};
 
 	stat = add_listener(ca, kAudioDevicePropertyDeviceIsAlive);
-	if (!ca_success(stat, ca, "coreaudio_init_hooks",
-			"set disconnect callback"))
+	if (!ca_success(stat, ca, "coreaudio_init_hooks", "set disconnect callback"))
 		return false;
 
 	stat = add_listener(ca, PROPERTY_FORMATS);
-	if (!ca_success(stat, ca, "coreaudio_init_hooks",
-			"set format change callback"))
+	if (!ca_success(stat, ca, "coreaudio_init_hooks", "set format change callback"))
 		return false;
 
 	if (ca->default_device) {
-		AudioObjectPropertyAddress addr = {
-			PROPERTY_DEFAULT_DEVICE,
-			kAudioObjectPropertyScopeGlobal,
-			kAudioObjectPropertyElementMain};
+		AudioObjectPropertyAddress addr = {PROPERTY_DEFAULT_DEVICE, kAudioObjectPropertyScopeGlobal,
+						   kAudioObjectPropertyElementMain};
 
-		stat = AudioObjectAddPropertyListener(kAudioObjectSystemObject,
-						      &addr,
-						      notification_callback,
-						      ca);
-		if (!ca_success(stat, ca, "coreaudio_init_hooks",
-				"set device change callback"))
+		stat = AudioObjectAddPropertyListener(kAudioObjectSystemObject, &addr, notification_callback, ca);
+		if (!ca_success(stat, ca, "coreaudio_init_hooks", "set device change callback"))
 			return false;
 	}
 
-	stat = set_property(ca->unit, kAudioOutputUnitProperty_SetInputCallback,
-			    SCOPE_GLOBAL, 0, &callback_info,
+	stat = set_property(ca->unit, kAudioOutputUnitProperty_SetInputCallback, SCOPE_GLOBAL, 0, &callback_info,
 			    sizeof(callback_info));
 	if (!ca_success(stat, ca, "coreaudio_init_hooks", "set input callback"))
 		return false;
@@ -479,29 +442,23 @@ static bool coreaudio_init_hooks(struct coreaudio_data *ca)
 
 static void coreaudio_remove_hooks(struct coreaudio_data *ca)
 {
-	AURenderCallbackStruct callback_info = {.inputProc = NULL,
-						.inputProcRefCon = NULL};
+	AURenderCallbackStruct callback_info = {.inputProc = NULL, .inputProcRefCon = NULL};
 
-	AudioObjectPropertyAddress addr = {kAudioDevicePropertyDeviceIsAlive,
-					   kAudioObjectPropertyScopeGlobal,
+	AudioObjectPropertyAddress addr = {kAudioDevicePropertyDeviceIsAlive, kAudioObjectPropertyScopeGlobal,
 					   kAudioObjectPropertyElementMain};
 
-	AudioObjectRemovePropertyListener(ca->device_id, &addr,
-					  notification_callback, ca);
+	AudioObjectRemovePropertyListener(ca->device_id, &addr, notification_callback, ca);
 
 	addr.mSelector = PROPERTY_FORMATS;
-	AudioObjectRemovePropertyListener(ca->device_id, &addr,
-					  notification_callback, ca);
+	AudioObjectRemovePropertyListener(ca->device_id, &addr, notification_callback, ca);
 
 	if (ca->default_device) {
 		addr.mSelector = PROPERTY_DEFAULT_DEVICE;
-		AudioObjectRemovePropertyListener(kAudioObjectSystemObject,
-						  &addr, notification_callback,
-						  ca);
+		AudioObjectRemovePropertyListener(kAudioObjectSystemObject, &addr, notification_callback, ca);
 	}
 
-	set_property(ca->unit, kAudioOutputUnitProperty_SetInputCallback,
-		     SCOPE_GLOBAL, 0, &callback_info, sizeof(callback_info));
+	set_property(ca->unit, kAudioOutputUnitProperty_SetInputCallback, SCOPE_GLOBAL, 0, &callback_info,
+		     sizeof(callback_info));
 }
 
 static bool coreaudio_get_device_name(struct coreaudio_data *ca)
@@ -510,13 +467,10 @@ static bool coreaudio_get_device_name(struct coreaudio_data *ca)
 	UInt32 size = sizeof(CFStringRef);
 	char *name = NULL;
 
-	const AudioObjectPropertyAddress addr = {
-		kAudioDevicePropertyDeviceNameCFString,
-		kAudioObjectPropertyScopeInput,
-		kAudioObjectPropertyElementMain};
+	const AudioObjectPropertyAddress addr = {kAudioDevicePropertyDeviceNameCFString, kAudioObjectPropertyScopeInput,
+						 kAudioObjectPropertyElementMain};
 
-	OSStatus stat = AudioObjectGetPropertyData(ca->device_id, &addr, 0,
-						   NULL, &size, &cf_name);
+	OSStatus stat = AudioObjectGetPropertyData(ca->device_id, &addr, 0, NULL, &size, &cf_name);
 	if (stat != noErr) {
 		blog(LOG_WARNING,
 		     "[coreaudio_get_device_name] failed to "
@@ -567,9 +521,8 @@ static void coreaudio_stop(struct coreaudio_data *ca)
 
 static bool coreaudio_init_unit(struct coreaudio_data *ca)
 {
-	AudioComponentDescription desc = {
-		.componentType = kAudioUnitType_Output,
-		.componentSubType = kAudioUnitSubType_HALOutput};
+	AudioComponentDescription desc = {.componentType = kAudioUnitType_Output,
+					  .componentSubType = kAudioUnitSubType_HALOutput};
 
 	AudioComponent component = AudioComponentFindNext(NULL, &desc);
 	if (!component) {
@@ -607,8 +560,7 @@ static bool coreaudio_init(struct coreaudio_data *ca)
 	if (!ca_success(stat, ca, "coreaudio_init", "disable output io"))
 		goto fail;
 
-	stat = set_property(ca->unit, kAudioOutputUnitProperty_CurrentDevice,
-			    SCOPE_GLOBAL, 0, &ca->device_id,
+	stat = set_property(ca->unit, kAudioOutputUnitProperty_CurrentDevice, SCOPE_GLOBAL, 0, &ca->device_id,
 			    sizeof(ca->device_id));
 	if (!ca_success(stat, ca, "coreaudio_init", "set current device"))
 		goto fail;
@@ -627,8 +579,7 @@ static bool coreaudio_init(struct coreaudio_data *ca)
 	if (!coreaudio_start(ca))
 		goto fail;
 
-	blog(LOG_INFO, "coreaudio: Device '%s' [%" PRIu32 " Hz] initialized",
-	     ca->device_name, ca->sample_rate);
+	blog(LOG_INFO, "coreaudio: Device '%s' [%" PRIu32 " Hz] initialized", ca->device_name, ca->sample_rate);
 	return ca->au_initialized;
 
 fail:
@@ -737,8 +688,7 @@ static void coreaudio_defaults(obs_data_t *settings)
 	obs_data_set_default_string(settings, "device_id", "default");
 }
 
-static void *coreaudio_create(obs_data_t *settings, obs_source_t *source,
-			      bool input)
+static void *coreaudio_create(obs_data_t *settings, obs_source_t *source, bool input)
 {
 	struct coreaudio_data *ca = bzalloc(sizeof(struct coreaudio_data));
 
@@ -762,14 +712,12 @@ static void *coreaudio_create(obs_data_t *settings, obs_source_t *source,
 	return ca;
 }
 
-static void *coreaudio_create_input_capture(obs_data_t *settings,
-					    obs_source_t *source)
+static void *coreaudio_create_input_capture(obs_data_t *settings, obs_source_t *source)
 {
 	return coreaudio_create(settings, source, true);
 }
 
-static void *coreaudio_create_output_capture(obs_data_t *settings,
-					     obs_source_t *source)
+static void *coreaudio_create_output_capture(obs_data_t *settings, obs_source_t *source)
 {
 	return coreaudio_create(settings, source, false);
 }
@@ -782,20 +730,17 @@ static obs_properties_t *coreaudio_properties(bool input)
 
 	memset(&devices, 0, sizeof(struct device_list));
 
-	property = obs_properties_add_list(props, "device_id", TEXT_DEVICE,
-					   OBS_COMBO_TYPE_LIST,
-					   OBS_COMBO_FORMAT_STRING);
+	property =
+		obs_properties_add_list(props, "device_id", TEXT_DEVICE, OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 
 	coreaudio_enum_devices(&devices, input);
 
 	if (devices.items.num)
-		obs_property_list_add_string(property, TEXT_DEVICE_DEFAULT,
-					     "default");
+		obs_property_list_add_string(property, TEXT_DEVICE_DEFAULT, "default");
 
 	for (size_t i = 0; i < devices.items.num; i++) {
 		struct device_item *item = devices.items.array + i;
-		obs_property_list_add_string(property, item->name.array,
-					     item->value.array);
+		obs_property_list_add_string(property, item->name.array, item->value.array);
 	}
 
 	device_list_free(&devices);
@@ -832,8 +777,7 @@ struct obs_source_info coreaudio_input_capture_info = {
 struct obs_source_info coreaudio_output_capture_info = {
 	.id = "coreaudio_output_capture",
 	.type = OBS_SOURCE_TYPE_INPUT,
-	.output_flags = OBS_SOURCE_AUDIO | OBS_SOURCE_DO_NOT_DUPLICATE |
-			OBS_SOURCE_DO_NOT_SELF_MONITOR,
+	.output_flags = OBS_SOURCE_AUDIO | OBS_SOURCE_DO_NOT_DUPLICATE | OBS_SOURCE_DO_NOT_SELF_MONITOR,
 	.get_name = coreaudio_output_getname,
 	.create = coreaudio_create_output_capture,
 	.destroy = coreaudio_destroy,

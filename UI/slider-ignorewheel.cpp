@@ -5,9 +5,7 @@ SliderIgnoreScroll::SliderIgnoreScroll(QWidget *parent) : QSlider(parent)
 	setFocusPolicy(Qt::StrongFocus);
 }
 
-SliderIgnoreScroll::SliderIgnoreScroll(Qt::Orientation orientation,
-				       QWidget *parent)
-	: QSlider(parent)
+SliderIgnoreScroll::SliderIgnoreScroll(Qt::Orientation orientation, QWidget *parent) : QSlider(parent)
 {
 	setFocusPolicy(Qt::StrongFocus);
 	setOrientation(orientation);
@@ -21,23 +19,18 @@ void SliderIgnoreScroll::wheelEvent(QWheelEvent *event)
 		QSlider::wheelEvent(event);
 }
 
-VolumeSlider::VolumeSlider(obs_fader_t *fader, QWidget *parent)
-	: SliderIgnoreScroll(parent)
+VolumeSlider::VolumeSlider(obs_fader_t *fader, QWidget *parent) : SliderIgnoreScroll(parent)
 {
 	fad = fader;
 }
 
-VolumeSlider::VolumeSlider(obs_fader_t *fader, Qt::Orientation orientation,
-			   QWidget *parent)
+VolumeSlider::VolumeSlider(obs_fader_t *fader, Qt::Orientation orientation, QWidget *parent)
 	: SliderIgnoreScroll(orientation, parent)
 {
 	fad = fader;
 }
 
-VolumeAccessibleInterface::VolumeAccessibleInterface(QWidget *w)
-	: QAccessibleWidget(w)
-{
-}
+VolumeAccessibleInterface::VolumeAccessibleInterface(QWidget *w) : QAccessibleWidget(w) {}
 
 VolumeSlider *VolumeAccessibleInterface::slider() const
 {
@@ -99,8 +92,7 @@ void SliderIgnoreClick::mousePressEvent(QMouseEvent *event)
 {
 	QStyleOptionSlider styleOption;
 	initStyleOption(&styleOption);
-	QRect handle = style()->subControlRect(QStyle::CC_Slider, &styleOption,
-					       QStyle::SC_SliderHandle, this);
+	QRect handle = style()->subControlRect(QStyle::CC_Slider, &styleOption, QStyle::SC_SliderHandle, this);
 	if (handle.contains(event->position().toPoint())) {
 		SliderIgnoreScroll::mousePressEvent(event);
 		dragging = true;

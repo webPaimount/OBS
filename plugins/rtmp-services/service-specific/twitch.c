@@ -69,8 +69,7 @@ static bool load_ingests(const char *json, bool write_file)
 
 		/* At the moment they currently mis-spell "deprecated",
 		 * but that may change in the future, so blacklist both */
-		if (strstr(name_str, "deprecated") != NULL ||
-		    strstr(name_str, "depracated") != NULL)
+		if (strstr(name_str, "deprecated") != NULL || strstr(name_str, "depracated") != NULL)
 			continue;
 
 		dstr_copy(&url, url_str);
@@ -167,10 +166,9 @@ void twitch_ingests_refresh(int seconds)
 	if (!os_atomic_load_bool(&ingests_refreshing)) {
 		os_atomic_set_bool(&ingests_refreshing, true);
 
-		twitch_update_info = update_info_create_single(
-			"[twitch ingest update] ", get_module_name(),
-			"https://ingest.twitch.tv/ingests",
-			twitch_ingest_update, NULL);
+		twitch_update_info = update_info_create_single("[twitch ingest update] ", get_module_name(),
+							       "https://ingest.twitch.tv/ingests", twitch_ingest_update,
+							       NULL);
 	}
 
 	/* wait five seconds max when loading ingests for the first time */
@@ -188,8 +186,7 @@ void load_twitch_data(void)
 {
 	char *twitch_cache = obs_module_config_path("twitch_ingests.json");
 
-	struct ingest def = {.name = bstrdup("Default"),
-			     .url = bstrdup("rtmp://live.twitch.tv/app")};
+	struct ingest def = {.name = bstrdup("Default"), .url = bstrdup("rtmp://live.twitch.tv/app")};
 
 	pthread_mutex_lock(&mutex);
 	da_push_back(cur_ingests, &def);

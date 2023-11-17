@@ -55,8 +55,7 @@ private slots:
 	void ScreenRemoved(QScreen *screen_);
 
 public:
-	OBSProjector(QWidget *widget, obs_source_t *source_, int monitor,
-		     ProjectorType type_);
+	OBSProjector(QWidget *widget, obs_source_t *source_, int monitor, ProjectorType type_);
 	~OBSProjector();
 
 	OBSSource GetSource();

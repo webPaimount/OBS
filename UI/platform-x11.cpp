@@ -58,8 +58,7 @@ void CheckIfAlreadyRunning(bool &already_running)
 	int uniq = socket(AF_LOCAL, SOCK_DGRAM | SOCK_CLOEXEC, 0);
 
 	if (uniq == -1) {
-		blog(LOG_ERROR,
-		     "Failed to check for running instance, socket: %d", errno);
+		blog(LOG_ERROR, "Failed to check for running instance, socket: %d", errno);
 		already_running = 0;
 		return;
 	}
@@ -67,12 +66,10 @@ void CheckIfAlreadyRunning(bool &already_running)
 	struct sockaddr_un bindInfo;
 	memset(&bindInfo, 0, sizeof(sockaddr_un));
 	bindInfo.sun_family = AF_LOCAL;
-	snprintf(bindInfo.sun_path + 1, sizeof(bindInfo.sun_path) - 1,
-		 "%s %d %s", "/com/obsproject", getpid(),
+	snprintf(bindInfo.sun_path + 1, sizeof(bindInfo.sun_path) - 1, "%s %d %s", "/com/obsproject", getpid(),
 		 App()->GetVersionString().c_str());
 
-	int bindErr = bind(uniq, (struct sockaddr *)&bindInfo,
-			   sizeof(struct sockaddr_un));
+	int bindErr = bind(uniq, (struct sockaddr *)&bindInfo, sizeof(struct sockaddr_un));
 	already_running = bindErr == 0 ? 0 : 1;
 
 	if (already_running) {
@@ -135,8 +132,7 @@ const char *RunOnce::thr_name = "OBS runonce";
 
 void CheckIfAlreadyRunning(bool &already_running)
 {
-	std::string tmpfile_name =
-		"/tmp/obs-studio.lock." + std::to_string(geteuid());
+	std::string tmpfile_name = "/tmp/obs-studio.lock." + std::to_string(geteuid());
 	int fd = open(tmpfile_name.c_str(), O_RDWR | O_CREAT | O_EXLOCK, 0600);
 	if (fd == -1) {
 		already_running = true;
@@ -147,11 +143,9 @@ void CheckIfAlreadyRunning(bool &already_running)
 
 	procstat *ps = procstat_open_sysctl();
 	unsigned int count;
-	auto procs = procstat_getprocs(ps, KERN_PROC_UID | KERN_PROC_INC_THREAD,
-				       geteuid(), &count);
+	auto procs = procstat_getprocs(ps, KERN_PROC_UID | KERN_PROC_INC_THREAD, geteuid(), &count);
 	for (unsigned int i = 0; i < count; i++) {
-		if (!strncmp(procs[i].ki_tdname, RunOnce::thr_name,
-			     sizeof(procs[i].ki_tdname))) {
+		if (!strncmp(procs[i].ki_tdname, RunOnce::thr_name, sizeof(procs[i].ki_tdname))) {
 			already_running = true;
 			break;
 		}
@@ -171,8 +165,7 @@ void CheckIfAlreadyRunning(bool &already_running)
 }
 #endif
 
-static inline bool check_path(const char *data, const char *path,
-			      string &output)
+static inline bool check_path(const char *data, const char *path, string &output)
 {
 	ostringstream str;
 	str << path << data;

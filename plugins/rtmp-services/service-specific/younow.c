@@ -13,8 +13,7 @@ struct younow_mem_struct {
 
 static char *current_ingest = NULL;
 
-static size_t younow_write_cb(void *contents, size_t size, size_t nmemb,
-			      void *userp)
+static size_t younow_write_cb(void *contents, size_t size, size_t nmemb, void *userp)
 {
 	size_t realsize = size * nmemb;
 	struct younow_mem_struct *mem = (struct younow_mem_struct *)userp;
@@ -43,8 +42,7 @@ const char *younow_get_ingest(const char *server, const char *key)
 	// find the delimiter in stream key
 	const char *delim = strchr(key, '_');
 	if (delim == NULL) {
-		blog(LOG_WARNING,
-		     "younow_get_ingest: delimiter not found in stream key");
+		blog(LOG_WARNING, "younow_get_ingest: delimiter not found in stream key");
 		return server;
 	}
 
@@ -69,9 +67,7 @@ const char *younow_get_ingest(const char *server, const char *key)
 	dstr_free(&uri);
 
 	if (res != CURLE_OK) {
-		blog(LOG_WARNING,
-		     "younow_get_ingest: curl_easy_perform() failed: %s",
-		     curl_easy_strerror(res));
+		blog(LOG_WARNING, "younow_get_ingest: curl_easy_perform() failed: %s", curl_easy_strerror(res));
 		curl_easy_cleanup(curl_handle);
 		free(chunk.memory);
 		return server;
@@ -79,9 +75,7 @@ const char *younow_get_ingest(const char *server, const char *key)
 
 	curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &response_code);
 	if (response_code != 200) {
-		blog(LOG_WARNING,
-		     "younow_get_ingest: curl_easy_perform() returned code: %ld",
-		     response_code);
+		blog(LOG_WARNING, "younow_get_ingest: curl_easy_perform() returned code: %ld", response_code);
 		curl_easy_cleanup(curl_handle);
 		free(chunk.memory);
 		return server;
@@ -90,8 +84,7 @@ const char *younow_get_ingest(const char *server, const char *key)
 	curl_easy_cleanup(curl_handle);
 
 	if (chunk.size == 0) {
-		blog(LOG_WARNING,
-		     "younow_get_ingest: curl_easy_perform() returned empty response");
+		blog(LOG_WARNING, "younow_get_ingest: curl_easy_perform() returned empty response");
 		free(chunk.memory);
 		return server;
 	}
@@ -103,7 +96,6 @@ const char *younow_get_ingest(const char *server, const char *key)
 
 	current_ingest = strdup(chunk.memory);
 	free(chunk.memory);
-	blog(LOG_INFO, "younow_get_ingest: returning ingest: %s",
-	     current_ingest);
+	blog(LOG_INFO, "younow_get_ingest: returning ingest: %s", current_ingest);
 	return current_ingest;
 }

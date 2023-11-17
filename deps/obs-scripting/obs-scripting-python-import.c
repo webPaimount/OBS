@@ -51,8 +51,7 @@ bool import_python(const char *python_path, python_version_t *python_version)
 		python_path = "";
 
 	if (!python_version) {
-		blog(LOG_DEBUG,
-		     "[Python] Invalid python_version pointer provided.");
+		blog(LOG_DEBUG, "[Python] Invalid python_version pointer provided.");
 		goto fail;
 	}
 
@@ -70,8 +69,7 @@ bool import_python(const char *python_path, python_version_t *python_version)
 
 	char temp[PATH_MAX];
 
-	snprintf(cur_version, sizeof(cur_version), VERSION_PATTERN,
-		 PY_MAJOR_VERSION_MAX, PY_MINOR_VERSION_MAX);
+	snprintf(cur_version, sizeof(cur_version), VERSION_PATTERN, PY_MAJOR_VERSION_MAX, PY_MINOR_VERSION_MAX);
 	snprintf(temp, sizeof(temp), FILE_PATTERN, cur_version);
 
 	dstr_cat(&lib_candidate_path, temp);
@@ -86,32 +84,28 @@ bool import_python(const char *python_path, python_version_t *python_version)
 			break;
 		}
 
-		snprintf(cur_version, sizeof(cur_version), VERSION_PATTERN,
-			 PY_MAJOR_VERSION_MAX, minor_version);
-		snprintf(next_version, sizeof(next_version), VERSION_PATTERN,
-			 PY_MAJOR_VERSION_MAX, --minor_version);
+		snprintf(cur_version, sizeof(cur_version), VERSION_PATTERN, PY_MAJOR_VERSION_MAX, minor_version);
+		snprintf(next_version, sizeof(next_version), VERSION_PATTERN, PY_MAJOR_VERSION_MAX, --minor_version);
 		dstr_replace(&lib_candidate_path, cur_version, next_version);
 	} while (minor_version > 5);
 
 	dstr_free(&lib_candidate_path);
 
 	if (!lib) {
-		blog(LOG_WARNING, "[Python] Could not load library: %s",
-		     lib_path.array);
+		blog(LOG_WARNING, "[Python] Could not load library: %s", lib_path.array);
 		goto fail;
 	}
 
 	python_version->major = PY_MAJOR_VERSION_MAX;
 	python_version->minor = minor_version;
 
-#define IMPORT_FUNC(x)                                                     \
-	do {                                                               \
-		Import_##x = os_dlsym(lib, #x);                            \
-		if (!Import_##x) {                                         \
-			blog(LOG_WARNING, "[Python] Failed to import: %s", \
-			     #x);                                          \
-			goto fail;                                         \
-		}                                                          \
+#define IMPORT_FUNC(x)                                                          \
+	do {                                                                    \
+		Import_##x = os_dlsym(lib, #x);                                 \
+		if (!Import_##x) {                                              \
+			blog(LOG_WARNING, "[Python] Failed to import: %s", #x); \
+			goto fail;                                              \
+		}                                                               \
 	} while (false)
 
 	IMPORT_FUNC(PyType_Ready);

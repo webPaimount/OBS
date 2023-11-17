@@ -87,14 +87,10 @@ private:
 	std::mutex selectMutex;
 
 	static vec2 GetMouseEventPos(QMouseEvent *event);
-	static bool FindSelected(obs_scene_t *scene, obs_sceneitem_t *item,
-				 void *param);
-	static bool DrawSelectedOverflow(obs_scene_t *scene,
-					 obs_sceneitem_t *item, void *param);
-	static bool DrawSelectedItem(obs_scene_t *scene, obs_sceneitem_t *item,
-				     void *param);
-	static bool DrawSelectionBox(float x1, float y1, float x2, float y2,
-				     gs_vertbuffer_t *box);
+	static bool FindSelected(obs_scene_t *scene, obs_sceneitem_t *item, void *param);
+	static bool DrawSelectedOverflow(obs_scene_t *scene, obs_sceneitem_t *item, void *param);
+	static bool DrawSelectedItem(obs_scene_t *scene, obs_sceneitem_t *item, void *param);
+	static bool DrawSelectionBox(float x1, float y1, float x2, float y2, gs_vertbuffer_t *box);
 
 	static OBSSceneItem GetItemAtPos(const vec2 &pos, bool selectBelow);
 	static bool SelectedAtPos(const vec2 &pos);
@@ -125,8 +121,7 @@ private:
 	bool changed;
 
 public:
-	OBSBasicPreview(QWidget *parent,
-			Qt::WindowFlags flags = Qt::WindowFlags());
+	OBSBasicPreview(QWidget *parent, Qt::WindowFlags flags = Qt::WindowFlags());
 	~OBSBasicPreview();
 
 	static OBSBasicPreview *Get();
@@ -148,10 +143,7 @@ public:
 	inline void ToggleLocked() { locked = !locked; }
 	inline bool Locked() const { return locked; }
 
-	inline void SetFixedScaling(bool newFixedScalingVal)
-	{
-		fixedScaling = newFixedScalingVal;
-	}
+	inline void SetFixedScaling(bool newFixedScalingVal) { fixedScaling = newFixedScalingVal; }
 	inline bool IsFixedScaling() const { return fixedScaling; }
 
 	void SetScalingLevel(int32_t newScalingLevelVal);
@@ -160,31 +152,16 @@ public:
 	inline float GetScalingAmount() const { return scalingAmount; }
 
 	void ResetScrollingOffset();
-	inline void SetScrollingOffset(float x, float y)
-	{
-		vec2_set(&scrollingOffset, x, y);
-	}
+	inline void SetScrollingOffset(float x, float y) { vec2_set(&scrollingOffset, x, y); }
 	inline float GetScrollX() const { return scrollingOffset.x; }
 	inline float GetScrollY() const { return scrollingOffset.y; }
 
 	inline void SetOverflowHidden(bool hidden) { overflowHidden = hidden; }
-	inline void SetOverflowSelectionHidden(bool hidden)
-	{
-		overflowSelectionHidden = hidden;
-	}
-	inline void SetOverflowAlwaysVisible(bool visible)
-	{
-		overflowAlwaysVisible = visible;
-	}
+	inline void SetOverflowSelectionHidden(bool hidden) { overflowSelectionHidden = hidden; }
+	inline void SetOverflowAlwaysVisible(bool visible) { overflowAlwaysVisible = visible; }
 
-	inline bool GetOverflowSelectionHidden() const
-	{
-		return overflowSelectionHidden;
-	}
-	inline bool GetOverflowAlwaysVisible() const
-	{
-		return overflowAlwaysVisible;
-	}
+	inline bool GetOverflowSelectionHidden() const { return overflowSelectionHidden; }
+	inline bool GetOverflowAlwaysVisible() const { return overflowAlwaysVisible; }
 
 	/* use libobs allocator for alignment because the matrices itemToScreen
 	 * and screenToItem may contain SSE data, which will cause SSE

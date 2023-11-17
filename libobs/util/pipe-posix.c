@@ -25,8 +25,7 @@ struct os_process_pipe {
 	FILE *file;
 };
 
-os_process_pipe_t *os_process_pipe_create(const char *cmd_line,
-					  const char *type)
+os_process_pipe_t *os_process_pipe_create(const char *cmd_line, const char *type)
 {
 	struct os_process_pipe pipe = {0};
 	struct os_process_pipe *out;
@@ -73,8 +72,7 @@ size_t os_process_pipe_read(os_process_pipe_t *pp, uint8_t *data, size_t len)
 	return fread(data, 1, len, pp->file);
 }
 
-size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data,
-				size_t len)
+size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data, size_t len)
 {
 	/* XXX: unsupported on posix */
 	UNUSED_PARAMETER(pp);
@@ -83,8 +81,7 @@ size_t os_process_pipe_read_err(os_process_pipe_t *pp, uint8_t *data,
 	return 0;
 }
 
-size_t os_process_pipe_write(os_process_pipe_t *pp, const uint8_t *data,
-			     size_t len)
+size_t os_process_pipe_write(os_process_pipe_t *pp, const uint8_t *data, size_t len)
 {
 	if (!pp) {
 		return 0;

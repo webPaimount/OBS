@@ -22,8 +22,7 @@ MediaSlider::MediaSlider(QWidget *parent) : SliderIgnoreScroll(parent)
 
 void MediaSlider::mouseMoveEvent(QMouseEvent *event)
 {
-	int val = minimum() +
-		  ((maximum() - minimum()) * event->pos().x()) / width();
+	int val = minimum() + ((maximum() - minimum()) * event->pos().x()) / width();
 
 	if (val > maximum())
 		val = maximum();
@@ -40,8 +39,7 @@ bool MediaSlider::eventFilter(QObject *obj, QEvent *event)
 	if (event->type() == QEvent::KeyPress) {
 		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-		if (keyEvent->key() == Qt::Key_Up ||
-		    keyEvent->key() == Qt::Key_Down) {
+		if (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Down) {
 			return true;
 		}
 	}
