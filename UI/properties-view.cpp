@@ -1898,6 +1898,7 @@ bool WidgetInfo::ColorChangedInternal(const char *setting, bool supportAlpha)
 	options |= QColorDialog::DontUseNativeDialog;
 #endif
 
+	HotkeyBlocker hb;
 	color = QColorDialog::getColor(color, view, QT_UTF8(desc), options);
 
 #ifdef __APPLE__
@@ -1951,6 +1952,8 @@ bool WidgetInfo::FontChanged(const char *setting)
 #ifndef _WIN32
 	options = QFontDialog::DontUseNativeDialog;
 #endif
+
+	HotkeyBlocker hb;
 
 	if (!font_obj) {
 		QFont initial;
