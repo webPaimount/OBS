@@ -2663,6 +2663,20 @@
             ]
         },
         {
+            "name": "NUUM",
+            "servers": [
+                {
+                    "name": "Automatic",
+                    "url": "rtmp://push.rtmp.nuum.ru/live"
+                }
+            ],
+            "recommended": {
+                "keyint": 2,
+                "max video bitrate": 10000,
+                "max audio bitrate": 192
+            }
+        },
+        {
             "name": "Vault - by CommanderRoot",
             "common": false,
             "more_info_link": "https://vault.root-space.eu/",
