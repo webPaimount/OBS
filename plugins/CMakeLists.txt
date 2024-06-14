@@ -11,9 +11,7 @@ if(OBS_CMAKE_VERSION VERSION_GREATER_EQUAL 3.0.0)
   set_property(GLOBAL APPEND PROPERTY OBS_FEATURES_ENABLED "Plugin Support")
 
   macro(check_obs_browser)
-    if((OS_WINDOWS AND CMAKE_GENERATOR_PLATFORM MATCHES "(Win32|x64)")
-       OR OS_MACOS
-       OR OS_LINUX)
+    if((OS_WINDOWS AND CMAKE_GENERATOR_PLATFORM MATCHES "(Win32|x64)") OR OS_MACOS OR OS_LINUX)
       if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/obs-browser/CMakeLists.txt")
         message(FATAL_ERROR "Required submodule 'obs-browser' not available.")
       else()
