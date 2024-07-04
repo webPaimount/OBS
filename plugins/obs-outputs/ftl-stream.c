@@ -641,13 +641,6 @@ static bool ftl_stream_start(void *data)
 	obs_data_set_int(video_settings, "bf", 0);
 	obs_data_release(video_settings);
 
-	if (!obs_output_can_begin_data_capture(stream->output, 0)) {
-		return false;
-	}
-	if (!obs_output_initialize_encoders(stream->output, 0)) {
-		return false;
-	}
-
 	stream->frames_sent = 0;
 	os_atomic_set_bool(&stream->connecting, true);
 
