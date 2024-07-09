@@ -1,6 +1,6 @@
 #[=======================================================================[.rst
 FindSIMDE
--------
+---------
 
 FindModule for SIMD Everywhere
 
@@ -70,9 +70,9 @@ else()
 endif()
 
 if(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin|Windows")
-  set(AMF_ERROR_REASON "Ensure that obs-deps is provided as part of CMAKE_PREFIX_PATH.")
+  set(SIMDE_ERROR_REASON "Ensure that obs-deps is provided as part of CMAKE_PREFIX_PATH.")
 elseif(CMAKE_HOST_SYSTEM_NAME MATCHES "Linux|FreeBSD")
-  set(AMF_ERROR_REASON "Ensure SIMD Everywhere is available in local library paths.")
+  set(SIMDE_ERROR_REASON "Ensure SIMD Everywhere is available in local library paths.")
 endif()
 
 find_package_handle_standard_args(
