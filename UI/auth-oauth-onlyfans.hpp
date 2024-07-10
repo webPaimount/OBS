@@ -34,6 +34,9 @@ class OAuthOnlyfansLogin : public QDialog {
 	//!< Keeps a pointer on CEF widget.
 	QCefWidget *cefWidget = nullptr;
 
+	//!< Keeps Onlyfans base url.
+	const std::string of_base_url;
+
 	//!< Keeps a token.
 	QString token;
 	//!< Keeps a refresh token.
@@ -47,8 +50,9 @@ public:
 	 * Constructor.
 	 * @param parent [in] - A pointer on parent widget.
 	 * @param url [in] - A target url.
+	 * @param base_url [in] - Base url.
 	 */
-	explicit OAuthOnlyfansLogin(QWidget *parent, const std::string &url);
+	explicit OAuthOnlyfansLogin(QWidget *parent, const std::string &url, const std::string &base_url);
 
 	/**
 	 * Destructor.

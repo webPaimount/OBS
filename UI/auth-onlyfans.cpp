@@ -27,7 +27,7 @@ using namespace json11;
 #define SERVICE_NAME "OnlyFans.com"
 //-------------------------------------------------------------------------//
 #define OAUTH_OF_BASE_URL "https://obs-app.onlyfans.com/api/v1/"
-#define OAUTH_OF_LOGIN_PATH "login?redirectTo=%2Flogin%2Ffinalise&credentials=true"
+#define OAUTH_OF_LOGIN_PATH "/login?redirectTo=%2Flogin%2Ffinalise&credentials=true"
 #define ONLYFANS_SETTING_DOCK_NAME "onlyfansSettings"
 //-------------------------------------------------------------------------//
 class OBSBasicSettings;
@@ -64,10 +64,10 @@ static void try_override_of_urls()
 	if (url != nullptr) {
 		// Overriding the base url.
 		of_base_url = url;
-
-		if (of_base_url.back() != '/') {
-			of_base_url.push_back('/');
-		}
+	}
+	// Removing the last slash.
+	if (of_base_url.back() == '/') {
+		of_base_url.pop_back();
 	}
 
 	// Trying to read Onlyfans backend url from environment.
@@ -76,17 +76,18 @@ static void try_override_of_urls()
 	if (url != nullptr) {
 		// Overriding the base url.
 		oauth_of_base_url = url;
+	}
 
-		if (oauth_of_base_url.back() != '/') {
-			// Removing the last symbol.
-			oauth_of_base_url.push_back('/');
-		}
+	if (oauth_of_base_url.back() != '/') {
+		// Removing the last symbol.
+		oauth_of_base_url.push_back('/');
 	}
 }
 //-------------------------------------------------------------------------//
 std::shared_ptr<Auth> OnlyfansAuth::Login(QWidget *parent, const std::string &)
 {
-	OAuthOnlyfansLogin login(parent, of_base_url + OAUTH_OF_LOGIN_PATH);
+	OAuthOnlyfansLogin login(parent, of_base_url + OAUTH_OF_LOGIN_PATH,
+				 of_base_url);
 
 	if (login.exec() == QDialog::Rejected) {
 		return nullptr;
@@ -111,7 +112,9 @@ OnlyfansAuth::OnlyfansAuth(const Def &d) : base_class(d)
 	// Loading internal data.
 	base_class::LoadInternal();
 
-	if (not this->refresh_token.empty() && not this->GetToken(oauth_of_base_url + "refreshToken", this->refresh_token)) {
+	if (not this->refresh_token.empty() &&
+	    not this->GetToken(oauth_of_base_url + "refreshToken",
+			       this->refresh_token)) {
 		// Clearing tokens.
 		this->refresh_token.clear(), this->token.clear();
 		this->key_.clear(), this->server_.clear();
@@ -172,7 +175,9 @@ OnlyfansAuth::~OnlyfansAuth() noexcept
 //-------------------------------------------------------------------------//
 bool OnlyfansAuth::RetryLogin()
 {
-	OAuthOnlyfansLogin login(OBSBasic::Get(), of_base_url + OAUTH_OF_LOGIN_PATH);
+	OAuthOnlyfansLogin login(OBSBasic::Get(),
+				 of_base_url + OAUTH_OF_LOGIN_PATH,
+				 of_base_url);
 
 	if (login.exec() == QDialog::Rejected) {
 		return false;
@@ -252,7 +257,7 @@ void OnlyfansAuth::LoadUI()
 		uuid = qtUuid.toStdString();
 	}
 
-	std::string url = QString("%1%2")
+	std::string url = QString("%1/%2")
 				  .arg(of_base_url.c_str(), "stream-settings")
 				  .toStdString();
 	/* ----------------------------------- */

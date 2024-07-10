@@ -24,8 +24,9 @@ extern QCef *cef;
 extern QCefCookieManager *panel_cookies;
 #endif
 //-------------------------------------------------------------------------//
-OAuthOnlyfansLogin::OAuthOnlyfansLogin(QWidget *parent, const std::string &url)
-	: QDialog(parent)
+OAuthOnlyfansLogin::OAuthOnlyfansLogin(QWidget *parent, const std::string &url,
+				       const std::string &base_url)
+	: QDialog(parent), of_base_url(base_url)
 {
 #ifdef BROWSER_AVAILABLE
 	if (cef == nullptr) {
@@ -103,13 +104,13 @@ void OAuthOnlyfansLogin::urlChanged(const QString &url)
 {
 	const char *params[] = {"accessToken=", "refreshToken="};
 
+	if (not url.startsWith(this->of_base_url.c_str())) {
+		return;
+	}
+
 	for (const auto &param : params) {
 		int code_idx = url.indexOf(param);
 		if (code_idx == -1) {
-			return;
-		}
-
-		if (not url.startsWith(OF_BASE_URL)) {
 			return;
 		}
 
