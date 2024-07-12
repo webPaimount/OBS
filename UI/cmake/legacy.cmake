@@ -25,8 +25,8 @@ set(OAUTH_BASE_URL
 mark_as_advanced(OAUTH_BASE_URL)
 
 set(OF_BASE_URL
-        "https://obs.onlyfans.com/"
-        CACHE STRING "Default Onlyfans OAuth base URL")
+    "https://obs.onlyfans.com/"
+    CACHE STRING "Default Onlyfans OAuth base URL")
 
 mark_as_advanced(OF_BASE_URL)
 
@@ -70,10 +70,10 @@ else()
 endif()
 
 if(NOT DEFINED ONLYFANS_CLIENTID
-        OR "${ONLYFANS_CLIENTID}" STREQUAL ""
-        OR NOT DEFINED ONLYFANS_HASH
-        OR "${ONLYFANS_HASH}" STREQUAL ""
-        OR NOT TARGET OBS::browser-panels)
+   OR "${ONLYFANS_CLIENTID}" STREQUAL ""
+   OR NOT DEFINED ONLYFANS_HASH
+   OR "${ONLYFANS_HASH}" STREQUAL ""
+   OR NOT TARGET OBS::browser-panels)
   set(ONLYFANS_ENABLED OFF)
   set(ONLYFANS_CLIENTID "")
   set(ONLYFANS_HASH "0")
