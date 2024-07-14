@@ -26,7 +26,8 @@ extern QCefCookieManager *panel_cookies;
 //-------------------------------------------------------------------------//
 OAuthOnlyfansLogin::OAuthOnlyfansLogin(QWidget *parent, const std::string &url,
 				       const std::string &base_url)
-	: QDialog(parent), of_base_url(base_url)
+	: QDialog(parent),
+	  of_base_url(base_url)
 {
 #ifdef BROWSER_AVAILABLE
 	if (cef == nullptr) {
@@ -194,8 +195,8 @@ auto OAuthOnlyfansStreamKey::GetTokenInternal(const char *url,
 		bool success = false;
 
 		// Making post body.
-		std::snprintf(buffer, sizeof(buffer) - 1, R"({"refreshToken": "%s"})",
-			     token.c_str());
+		std::snprintf(buffer, sizeof(buffer) - 1,
+			      R"({"refreshToken": "%s"})", token.c_str());
 
 		auto func = [&]() {
 			success = GetRemoteFile(url, output, error, nullptr,
@@ -235,8 +236,7 @@ auto OAuthOnlyfansStreamKey::GetTokenInternal(const char *url,
 	} catch (ErrorInfo &info) {
 		QString title = QTStr("Auth.AuthFailure.Title");
 		QString text = QTStr("Auth.AuthFailure.Text")
-				       .arg(service(),
-					    info.message.c_str(),
+				       .arg(service(), info.message.c_str(),
 					    info.error.c_str());
 
 		QMessageBox::warning(OBSBasic::Get(), title, text);

@@ -52,7 +52,8 @@ public:
 	 * @param url [in] - A target url.
 	 * @param base_url [in] - Base url.
 	 */
-	explicit OAuthOnlyfansLogin(QWidget *parent, const std::string &url, const std::string &base_url);
+	explicit OAuthOnlyfansLogin(QWidget *parent, const std::string &url,
+				    const std::string &base_url);
 
 	/**
 	 * Destructor.
@@ -94,8 +95,8 @@ public:
 	 * @param refresh_token [in] - A refresh token.
 	 * @return true, if token received, otherwise false.
 	 */
-	auto GetToken(const char *url,
-		      const std::string &refresh_token = "") -> bool;
+	auto GetToken(const char *url, const std::string &refresh_token = "")
+		-> bool;
 
 	/**
 	 * Gets a new token.
@@ -107,8 +108,8 @@ public:
 		      const std::string &refresh_token = "") -> bool;
 
 private:
-	auto GetTokenInternal(const char *url,
-			      const std::string &auth_code) -> bool;
+	auto GetTokenInternal(const char *url, const std::string &auth_code)
+		-> bool;
 
 	// Override methods.
 public:

@@ -881,17 +881,16 @@ void OBSBasicSettings::OnOAuthStreamKeyConnected()
 			bool validServer = !a->server().empty();
 
 			if (validServer) {
-				const auto customServerName
-					= "CustomCloud";
+				const auto customServerName = "CustomCloud";
 				auto index =
 					ui->server->findText(customServerName);
 
 				if (index != -1) {
 					ui->server->setItemData(
-						index,
-						a->server().c_str());
+						index, a->server().c_str());
 				} else {
-					ui->server->addItem(customServerName,
+					ui->server->addItem(
+						customServerName,
 						a->server().c_str());
 					index = ui->server->findText(
 						customServerName);

@@ -27,7 +27,8 @@ using namespace json11;
 #define SERVICE_NAME "OnlyFans.com"
 //-------------------------------------------------------------------------//
 #define OAUTH_OF_BASE_URL "https://obs-app.onlyfans.com/api/v1/"
-#define OAUTH_OF_LOGIN_PATH "/login?redirectTo=%2Flogin%2Ffinalise&credentials=true"
+#define OAUTH_OF_LOGIN_PATH \
+	"/login?redirectTo=%2Flogin%2Ffinalise&credentials=true"
 #define ONLYFANS_SETTING_DOCK_NAME "onlyfansSettings"
 //-------------------------------------------------------------------------//
 class OBSBasicSettings;
@@ -47,7 +48,8 @@ static inline std::string get_config_str(OBSBasic *main, const char *section,
 	return val ? val : "";
 }
 
-static void onstream_event(enum obs_frontend_event event, void */*private_data*/)
+static void onstream_event(enum obs_frontend_event event,
+			   void * /*private_data*/)
 {
 	if (event == OBS_FRONTEND_EVENT_STREAMING_STARTED) {
 		stream_started = true;
@@ -119,7 +121,8 @@ OnlyfansAuth::OnlyfansAuth(const Def &d) : base_class(d)
 		this->refresh_token.clear(), this->token.clear();
 		this->key_.clear(), this->server_.clear();
 
-		throw (std::invalid_argument("Client's token is invalid or not connected"));
+		throw(std::invalid_argument(
+			"Client's token is invalid or not connected"));
 	}
 
 	cef->add_popup_whitelist_url(of_base_url, this);
