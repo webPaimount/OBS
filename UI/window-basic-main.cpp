@@ -617,10 +617,8 @@ OBSBasic::OBSBasic(QWidget *parent)
 	connect(ui->scenes, &SceneTree::scenesReordered,
 		[]() { OBSProjector::UpdateMultiviewProjectors(); });
 
-	connect(App(), &OBSApp::StyleChanged, this, [this]() {
-		if (api)
-			api->on_event(OBS_FRONTEND_EVENT_THEME_CHANGED);
-	});
+	connect(App(), &OBSApp::StyleChanged, this,
+		[this]() { OnEvent(OBS_FRONTEND_EVENT_THEME_CHANGED); });
 
 	QActionGroup *actionGroup = new QActionGroup(this);
 	actionGroup->addAction(ui->actionSceneListMode);
@@ -1441,10 +1439,8 @@ retryScene:
 	if (vcamEnabled)
 		outputHandler->UpdateVirtualCamOutputSource();
 
-	if (api) {
-		api->on_event(OBS_FRONTEND_EVENT_SCENE_CHANGED);
-		api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
-	}
+	OnEvent(OBS_FRONTEND_EVENT_SCENE_CHANGED);
+	OnEvent(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 }
 
 #define SERVICE_PATH "service.json"
@@ -2525,8 +2521,7 @@ void OBSBasic::OBSInit()
 
 void OBSBasic::OnFirstLoad()
 {
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_FINISHED_LOADING);
+	OnEvent(OBS_FRONTEND_EVENT_FINISHED_LOADING);
 
 #ifdef WHATSNEW_ENABLED
 	/* Attempt to load init screen if available */
@@ -3352,8 +3347,7 @@ void OBSBasic::AddScene(OBSSource source)
 		OBSProjector::UpdateMultiviewProjectors();
 	}
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
+	OnEvent(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
 }
 
 void OBSBasic::RemoveScene(OBSSource source)
@@ -3388,8 +3382,7 @@ void OBSBasic::RemoveScene(OBSSource source)
 		OBSProjector::UpdateMultiviewProjectors();
 	}
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
+	OnEvent(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
 }
 
 static bool select_one(obs_scene_t * /* scene */, obs_sceneitem_t *item,
@@ -4481,8 +4474,7 @@ void OBSBasic::RemoveSelectedScene()
 
 	RemoveSceneAndReleaseNested(source);
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
+	OnEvent(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
 }
 
 void OBSBasic::ReorderSources(OBSScene scene)
@@ -5107,8 +5099,7 @@ void OBSBasic::ClearSceneData()
 	obs_enum_scenes(cb, nullptr);
 	obs_enum_sources(cb, nullptr);
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_SCENE_COLLECTION_CLEANUP);
+	OnEvent(OBS_FRONTEND_EVENT_SCENE_COLLECTION_CLEANUP);
 
 	undo_s.clear();
 
@@ -5280,8 +5271,7 @@ void OBSBasic::closeEvent(QCloseEvent *event)
 	ClearExtraBrowserDocks();
 #endif
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN);
+	OnEvent(OBS_FRONTEND_EVENT_SCRIPTING_SHUTDOWN);
 
 	disableSaving++;
 
@@ -5289,8 +5279,7 @@ void OBSBasic::closeEvent(QCloseEvent *event)
 	 * sources, etc) so that all references are released before shutdown */
 	ClearSceneData();
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_EXIT);
+	OnEvent(OBS_FRONTEND_EVENT_EXIT);
 
 	// Destroys the frontend API so plugins can't continue calling it
 	obs_frontend_set_callbacks_internal(nullptr);
@@ -5530,8 +5519,7 @@ void OBSBasic::on_scenes_currentItemChanged(QListWidgetItem *current,
 	if (vcamEnabled && vcamConfig.type == VCamOutputType::PreviewOutput)
 		outputHandler->UpdateVirtualCamOutputSource();
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
+	OnEvent(OBS_FRONTEND_EVENT_PREVIEW_SCENE_CHANGED);
 
 	UpdateContextBar();
 }
@@ -6874,8 +6862,7 @@ void OBSBasic::SceneNameEdited(QWidget *editor)
 
 	ui->scenesDock->addAction(renameScene);
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
+	OnEvent(OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED);
 }
 
 void OBSBasic::OpenFilters(OBSSource source)
@@ -7108,8 +7095,7 @@ void OBSBasic::StartStreaming()
 			return;
 		}
 
-		if (api)
-			api->on_event(OBS_FRONTEND_EVENT_STREAMING_STARTING);
+		OnEvent(OBS_FRONTEND_EVENT_STREAMING_STARTING);
 
 		SaveProject();
 
@@ -7466,8 +7452,7 @@ void OBSBasic::StreamDelayStopping(int sec)
 
 	ui->statusbar->StreamDelayStopping(sec);
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_STREAMING_STOPPING);
+	OnEvent(OBS_FRONTEND_EVENT_STREAMING_STOPPING);
 }
 
 void OBSBasic::StreamingStart()
@@ -7498,8 +7483,7 @@ void OBSBasic::StreamingStart()
 	}
 #endif
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_STREAMING_STARTED);
+	OnEvent(OBS_FRONTEND_EVENT_STREAMING_STARTED);
 
 	OnActivate();
 
@@ -7519,8 +7503,7 @@ void OBSBasic::StreamStopping()
 		sysTrayStream->setText(QTStr("Basic.Main.StoppingStreaming"));
 
 	streamingStopping = true;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_STREAMING_STOPPING);
+	OnEvent(OBS_FRONTEND_EVENT_STREAMING_STOPPING);
 }
 
 void OBSBasic::StreamingStop(int code, QString last_error)
@@ -7581,8 +7564,7 @@ void OBSBasic::StreamingStop(int code, QString last_error)
 	}
 
 	streamingStopping = false;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_STREAMING_STOPPED);
+	OnEvent(OBS_FRONTEND_EVENT_STREAMING_STOPPED);
 
 	OnDeactivate();
 
@@ -7714,8 +7696,7 @@ void OBSBasic::StartRecording()
 		return;
 	}
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STARTING);
+	OnEvent(OBS_FRONTEND_EVENT_RECORDING_STARTING);
 
 	SaveProject();
 
@@ -7730,8 +7711,7 @@ void OBSBasic::RecordStopping()
 		sysTrayRecord->setText(QTStr("Basic.Main.StoppingRecording"));
 
 	recordingStopping = true;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STOPPING);
+	OnEvent(OBS_FRONTEND_EVENT_RECORDING_STOPPING);
 }
 
 void OBSBasic::StopRecording()
@@ -7753,8 +7733,7 @@ void OBSBasic::RecordingStart()
 		sysTrayRecord->setText(QTStr("Basic.Main.StopRecording"));
 
 	recordingStopping = false;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STARTED);
+	OnEvent(OBS_FRONTEND_EVENT_RECORDING_STARTED);
 
 	if (!diskFullTimer->isActive())
 		diskFullTimer->start(1000);
@@ -7828,8 +7807,7 @@ void OBSBasic::RecordingStop(int code, QString last_error)
 		}
 	}
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_RECORDING_STOPPED);
+	OnEvent(OBS_FRONTEND_EVENT_RECORDING_STOPPED);
 
 	if (diskFullTimer->isActive())
 		diskFullTimer->stop();
@@ -7900,8 +7878,7 @@ void OBSBasic::StartReplayBuffer()
 		return;
 	}
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING);
+	OnEvent(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTING);
 
 	SaveProject();
 
@@ -7923,8 +7900,7 @@ void OBSBasic::ReplayBufferStopping()
 			QTStr("Basic.Main.StoppingReplayBuffer"));
 
 	replayBufferStopping = true;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING);
+	OnEvent(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPING);
 }
 
 void OBSBasic::StopReplayBuffer()
@@ -7952,8 +7928,7 @@ void OBSBasic::ReplayBufferStart()
 			QTStr("Basic.Main.StopReplayBuffer"));
 
 	replayBufferStopping = false;
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED);
+	OnEvent(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STARTED);
 
 	OnActivate();
 
@@ -7992,8 +7967,7 @@ void OBSBasic::ReplayBufferSaved()
 	lastReplay = path;
 	calldata_free(&cd);
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED);
+	OnEvent(OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED);
 
 	AutoRemux(QT_UTF8(path.c_str()));
 }
@@ -8037,8 +8011,7 @@ void OBSBasic::ReplayBufferStop(int code)
 			      QSystemTrayIcon::Warning);
 	}
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED);
+	OnEvent(OBS_FRONTEND_EVENT_REPLAY_BUFFER_STOPPED);
 
 	OnDeactivate();
 }
@@ -8080,8 +8053,7 @@ void OBSBasic::OnVirtualCamStart()
 	if (sysTrayVirtualCam)
 		sysTrayVirtualCam->setText(QTStr("Basic.Main.StopVirtualCam"));
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_VIRTUALCAM_STARTED);
+	OnEvent(OBS_FRONTEND_EVENT_VIRTUALCAM_STARTED);
 
 	OnActivate();
 
@@ -8098,8 +8070,7 @@ void OBSBasic::OnVirtualCamStop(int)
 	if (sysTrayVirtualCam)
 		sysTrayVirtualCam->setText(QTStr("Basic.Main.StartVirtualCam"));
 
-	if (api)
-		api->on_event(OBS_FRONTEND_EVENT_VIRTUALCAM_STOPPED);
+	OnEvent(OBS_FRONTEND_EVENT_VIRTUALCAM_STOPPED);
 
 	blog(LOG_INFO, VIRTUAL_CAM_STOP);
 
@@ -10727,8 +10698,7 @@ void OBSBasic::PauseRecording()
 							   trayIconFile));
 		}
 
-		if (api)
-			api->on_event(OBS_FRONTEND_EVENT_RECORDING_PAUSED);
+		OnEvent(OBS_FRONTEND_EVENT_RECORDING_PAUSED);
 
 		if (os_atomic_load_bool(&replaybuf_active))
 			ShowReplayBufferPauseWarning();
@@ -10765,8 +10735,7 @@ void OBSBasic::UnpauseRecording()
 							   trayIconFile));
 		}
 
-		if (api)
-			api->on_event(OBS_FRONTEND_EVENT_RECORDING_UNPAUSED);
+		OnEvent(OBS_FRONTEND_EVENT_RECORDING_UNPAUSED);
 	}
 }
 
@@ -11089,4 +11058,10 @@ void OBSBasic::UpdatePreviewSpacingHelpers()
 float OBSBasic::GetDevicePixelRatio()
 {
 	return dpi;
+}
+
+void OBSBasic::OnEvent(enum obs_frontend_event event)
+{
+	if (api)
+		api->on_event(event);
 }

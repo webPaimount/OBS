@@ -56,9 +56,7 @@ ScreenshotObj::~ScreenshotObj()
 
 			main->lastScreenshot = path;
 
-			if (main->api)
-				main->api->on_event(
-					OBS_FRONTEND_EVENT_SCREENSHOT_TAKEN);
+			main->OnEvent(OBS_FRONTEND_EVENT_SCREENSHOT_TAKEN);
 		}
 	}
 }
