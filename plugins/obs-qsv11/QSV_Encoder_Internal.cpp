@@ -233,8 +233,20 @@ mfxStatus QSV_Encoder_Internal::InitParams(qsv_param_t *pParams,
 	switch (pParams->nRateControl) {
 	case MFX_RATECONTROL_CBR:
 		m_mfxEncParams.mfx.TargetKbps = pParams->nTargetBitRate;
-		m_mfxEncParams.mfx.BufferSizeInKB =
-			(pParams->nTargetBitRate / 8) * 2;
+
+		PRAGMA_WARN_PUSH
+		PRAGMA_WARN_DEPRECATION
+		if ((m_ver.Major >= 2 && m_ver.Minor >= 12) &&
+		    (platform.CodeName == MFX_PLATFORM_LUNARLAKE ||
+		     platform.CodeName >= MFX_PLATFORM_MAXIMUM)) {
+			m_mfxEncParams.mfx.BufferSizeInKB =
+				(pParams->nTargetBitRate / 8) * 1;
+		} else {
+			m_mfxEncParams.mfx.BufferSizeInKB =
+				(pParams->nTargetBitRate / 8) * 2;
+		}
+		PRAGMA_WARN_POP
+
 		m_mfxEncParams.mfx.InitialDelayInKB =
 			(pParams->nTargetBitRate / 8) * 1;
 		break;
@@ -303,6 +315,26 @@ mfxStatus QSV_Encoder_Internal::InitParams(qsv_param_t *pParams,
 	}
 
 	extendedBuffers.push_back((mfxExtBuffer *)&m_co2);
+
+	PRAGMA_WARN_PUSH
+	PRAGMA_WARN_DEPRECATION
+	if (pParams->nRateControl == MFX_RATECONTROL_CBR &&
+	    (m_ver.Major >= 2 && m_ver.Minor >= 12) &&
+	    (platform.CodeName == MFX_PLATFORM_LUNARLAKE ||
+	     platform.CodeName >= MFX_PLATFORM_MAXIMUM)) {
+		memset(&m_co3, 0, sizeof(mfxExtCodingOption3));
+		m_co3.Header.BufferId = MFX_EXTBUFF_CODING_OPTION3;
+		m_co3.Header.BufferSz = sizeof(m_co3);
+		m_co3.WinBRCSize = pParams->nFpsNum / pParams->nFpsDen;
+
+		if (codec == QSV_CODEC_AVC || codec == QSV_CODEC_HEVC) {
+			m_co3.WinBRCMaxAvgKbps = 1.3 * pParams->nTargetBitRate;
+		} else if (codec == QSV_CODEC_AV1) {
+			m_co3.WinBRCMaxAvgKbps = 1.2 * pParams->nTargetBitRate;
+		}
+		extendedBuffers.push_back((mfxExtBuffer *)&m_co3);
+	}
+	PRAGMA_WARN_POP
 
 	if (codec == QSV_CODEC_HEVC) {
 		if ((pParams->nWidth & 15) || (pParams->nHeight & 15)) {
