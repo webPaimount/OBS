@@ -26,6 +26,7 @@
 #include "util/profiler.h"
 #include "util/task.h"
 #include "util/uthash.h"
+#include "util/array-serializer.h"
 #include "callback/signal.h"
 #include "callback/proc.h"
 
@@ -1089,6 +1090,66 @@ struct caption_track_data {
 	struct deque caption_data;
 };
 
+struct counter_data {
+	uint32_t diff;
+	uint32_t ref;
+	uint32_t curr;
+};
+
+// Broadcast Performance Metrics frame timing
+struct bpm_frame_time {
+	/* PTS used to associate uncompressed frames with encoded packets. */
+	int64_t pts;
+	/* Composition timestamp is when the frame was rendered. */
+	uint64_t cts;
+	/* FERC (Frame Encode Request) is when the frame was
+	 * submitted to the encoder for encoding via the encode
+	 * callback (e.g. encode_texture2()).
+	 */
+	uint64_t fer;
+	/* FERC (Frame Encode Request Complete) is when
+	 * the associated FER event completed. If the encode
+	 * is synchronous with the call, this means FERC - FEC
+	 * measures the actual encode time, otherwise if the
+	 * encode is asynchronous, it measures the pipeline
+	 * delay between encode request and encode complete.
+	 */
+	uint64_t ferc;
+};
+
+#define RFC3339_MAX_LENGTH (64)
+struct metrics_time {
+	struct timespec tspec;
+	char rfc3339_str[RFC3339_MAX_LENGTH];
+	bool valid;
+};
+
+// Broadcast Performance Metrics SEI types
+enum bpm_sei_types {
+	BPM_TS_SEI = 0, // BPM Timestamp SEI
+	BPM_SM_SEI,     // BPM Session Metrics SEI
+	BPM_ERM_SEI,    // BPM Encoded Rendition Metrics SEI
+	BPM_MAX_SEI
+};
+
+struct metrics_data {
+	pthread_mutex_t metrics_mutex;
+	struct counter_data rendition_frames_input;
+	struct counter_data rendition_frames_output;
+	struct counter_data rendition_frames_skipped;
+	struct counter_data session_frames_rendered;
+	struct counter_data session_frames_output;
+	struct counter_data session_frames_dropped;
+	struct counter_data session_frames_lagged;
+	struct array_output_data sei_payload[BPM_MAX_SEI];
+	bool sei_rendered[BPM_MAX_SEI];
+	struct metrics_time
+		cts; // Composition timestamp (i.e. when the frame was created)
+	struct metrics_time ferts;  // Frame encode request timestamp
+	struct metrics_time fercts; // Frame encode request complete timestamp
+	struct metrics_time pirts;  // Packet Interleave Request timestamp
+};
+
 struct pause_data {
 	pthread_mutex_t mutex;
 	uint64_t last_video_ts;
@@ -1182,6 +1243,14 @@ struct obs_output {
 
 	// captions are output per track
 	struct caption_track_data *caption_tracks[MAX_OUTPUT_VIDEO_ENCODERS];
+
+	/* Broadcast Performance Metrics control */
+	bool enable_bpm;
+
+	/* Per-track metrics are modelled as a stream of data to allow
+	 * flexible insertion frequency.
+	 */
+	struct metrics_data *metrics_tracks[MAX_OUTPUT_VIDEO_ENCODERS];
 
 	bool valid;
 
@@ -1299,6 +1368,9 @@ struct obs_encoder {
 	uint32_t frame_rate_divisor_counter; // only used for GPU encoders
 	video_t *fps_override;
 
+	// Number of frames successfully encoded
+	uint32_t encoded_frames;
+
 	/* Regions of interest to prioritize during encoding */
 	pthread_mutex_t roi_mutex;
 	DARRAY(struct obs_encoder_roi) roi;
@@ -1332,6 +1404,8 @@ struct obs_encoder {
 	pthread_mutex_t callbacks_mutex;
 	DARRAY(struct encoder_callback) callbacks;
 
+	DARRAY(struct bpm_frame_time) bpm_frame_times;
+
 	struct pause_data pause;
 
 	const char *profile_encoder_encode_name;
@@ -1363,7 +1437,8 @@ extern void obs_encoder_remove_output(struct obs_encoder *encoder,
 extern bool start_gpu_encode(obs_encoder_t *encoder);
 extern void stop_gpu_encode(obs_encoder_t *encoder);
 
-extern bool do_encode(struct obs_encoder *encoder, struct encoder_frame *frame);
+extern bool do_encode(struct obs_encoder *encoder, struct encoder_frame *frame,
+		      const uint64_t *frame_cts);
 extern void send_off_encoder_packet(obs_encoder_t *encoder, bool success,
 				    bool received, struct encoder_packet *pkt);
 
