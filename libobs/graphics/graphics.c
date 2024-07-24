@@ -947,8 +947,13 @@ static inline void assign_sprite_uv(float *start, float *end, bool flip)
 		*start = 0.0f;
 		*end = 1.0f;
 	} else {
+#if defined(_M_ARM64)
+		*start = 0.0f;
+		*end = 1.0f;
+#else
 		*start = 1.0f;
 		*end = 0.0f;
+#endif
 	}
 }
 
